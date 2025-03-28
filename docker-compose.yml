@@ -1,0 +1,35 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    restart: always
+    container_name: campaign-api
+    tty: true
+    environment:
+      HOST: "${API_INTERNAL_HOST}"
+      PORT: "${API_INTERNAL_PORT}"
+    ports:
+      - "${API_EXTERNAL_PORT}:${API_INTERNAL_PORT}"
+    volumes:
+      - .:/opt/app/
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:5.7
+    platform: linux/amd64
+    ports:
+      - $DB_LOCAL_PORT:$DB_DOCKER_PORT
+    expose:
+      - $DB_DOCKER_PORT
+    environment:
+      MYSQL_ROOT_PASSWORD: $DB_PASSWORD
+      MYSQL_USER: $DB_USER
+      MYSQL_PASSWORD: $DB_PASSWORD
+      MYSQL_DATABASE: $DB_DATABASE
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
