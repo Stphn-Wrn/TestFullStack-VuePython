@@ -12,7 +12,6 @@ def init_db(app):
     db_session.configure(bind=engine)
     Base.metadata.bind = engine
     
-    # Importez tous les modèles ici pour que SQLAlchemy les connaisse
     from  backend.src.users.models import User
     from  backend.src.campaigns.database import Campaign
     from  backend.src.relations.user_campaign import setup_relationships
