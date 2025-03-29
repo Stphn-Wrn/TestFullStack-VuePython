@@ -1,9 +1,12 @@
 from dotenv import load_dotenv
 load_dotenv()
-from flask import Flask
-from hello_world.routes import hello_world_bp
-app = Flask(__name__)
 
+from flask import Flask
+from backend.src.campaigns.routes import hello_world_bp
+from core.database import init_db
+
+app = Flask(__name__)
+init_db(app)
 app.register_blueprint(hello_world_bp, url_prefix="/hello") #prefixe
 
 @app.after_request
