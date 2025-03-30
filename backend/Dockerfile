@@ -9,6 +9,7 @@ ENV PYTHONUNBUFFERED 1
 RUN apt -y update \
     && pip install --upgrade pip \
     && pip install poetry \
+    && pip install greenlet \
     && apt install -y libpq-dev gcc \
     && poetry config virtualenvs.create false
 

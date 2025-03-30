@@ -12,7 +12,7 @@ config = context.config
 load_dotenv()
 
 import os
-db_url = os.getenv("SQLALCHEMY_DATABASE_URL_APP", "postgresql://stephen:test@localhost:5432/campaign")
+db_url = os.getenv("SQLALCHEMY_DATABASE_URL_APP", " postgresql://stephen:test@localhost:3306/campaign")
 print(f">> DB URL {db_url}")
 config.set_main_option("sqlalchemy.url", db_url)
 
@@ -29,8 +29,8 @@ if config.config_file_name is not None:
 # here is a way to automatically import data.py from domain
 for domain in next(os.walk('src'))[1]:
     domain_content = next(os.walk(f'src/{domain}'))[2]
-    if "data.py" in domain_content:
-        __import__("src.%s.data" % domain, fromlist=["src.%s" % domain])
+    if "models.py" in domain_content:
+        __import__("src.%s.models" % domain, fromlist=["src.%s" % domain])
 
 from src.core.database import Base
 

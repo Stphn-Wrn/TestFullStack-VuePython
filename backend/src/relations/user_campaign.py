@@ -1,15 +1,14 @@
-from backend.src.core.database import db
-from backend.src.users.models import User
-from backend.src.campaigns.database import Campaign
+from src.users.models import User
+from datetime import datetime, timezone
+from src.campaigns.models import Campaign
+from sqlalchemy import Table, Column, Integer, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
+from src.core.database import Base  
 
-user_campaign_association = db.Table(
-    'user_campaign_association',
-    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
-    Column('campaign_id', Integer, ForeignKey('campaigns.id'), primary_key=True),
-    Column('joined_at', DateTime, default=datetime.utcnow)
-)
 
-def setup_relationships():
+
+
+"""def setup_relationships():
     User.joined_campaigns = relationship(
         "Campaign",
         secondary=user_campaign_association,
@@ -23,4 +22,4 @@ def setup_relationships():
     )
     
     Campaign.owner = relationship("User", back_populates="campaigns")
-    User.campaigns = relationship("Campaign", back_populates="owner")
+    User.campaigns = relationship("Campaign", back_populates="owner")"""

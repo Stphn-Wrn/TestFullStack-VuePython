@@ -14,22 +14,40 @@ services:
     volumes:
       - .:/opt/app/
     depends_on:
-      mysql:
+      psql:
         condition: service_healthy
-
-  mysql:
-    image: mysql:5.7
-    platform: linux/amd64
+    networks:
+      - app-network 
+  adminer:
+    image: adminer
+    container_name: adminer2
     ports:
-      - $DB_LOCAL_PORT:$DB_DOCKER_PORT
-    expose:
-      - $DB_DOCKER_PORT
+      - "8080:8080"
+    depends_on:
+      - psql
+    networks:
+      - app-network  # Associer Adminer au réseau
+  psql:
+    image: postgres:latest
+    restart: always
+    container_name: campaign
     environment:
-      MYSQL_ROOT_PASSWORD: $DB_PASSWORD
-      MYSQL_USER: $DB_USER
-      MYSQL_PASSWORD: $DB_PASSWORD
-      MYSQL_DATABASE: $DB_DATABASE
+      - PGUSER=$POSTGRES_USER
+      - PGDATABASE=$POSTGRES_DB
+      - PGPASSWORD=$POSTGRES_PASSWORD
+      - POSTGRES_DB=$POSTGRES_DB
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - $POSTGRES_LOCAL_PORT:$POSTGRES_DOCKER_PORT
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+      test: ["CMD-SHELL", "pg_isready", "-d", "{$POSTGRES_DB}", "-U", "{$POSTGRES_USER}"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - app-network  # Associer Adminer au réseau
+networks:
+  app-network:  # Définition du réseau
+    driver: bridge

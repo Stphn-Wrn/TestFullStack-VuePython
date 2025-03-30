@@ -1,20 +1,19 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Table, Column, Integer, DateTime, ForeignKey
+from datetime import datetime, timezone
+import os 
 
+
+engine = create_engine(os.getenv("DATABASE_URL", "postgresql://stephen:test@psql/campaign"), pool_size=20, max_overflow=0)
+db_session = sessionmaker(bind=engine)
 Base = declarative_base()
-db_session = scoped_session(sessionmaker())
-engine = None
 
-def init_db(app):
-    global engine
-    engine = create_engine(app.config['SQLALCHEMY_DATABASE_URL_APP'])
-    db_session.configure(bind=engine)
-    Base.metadata.bind = engine
-    
-    from  backend.src.users.models import User
-    from  backend.src.campaigns.database import Campaign
-    from  backend.src.relations.user_campaign import setup_relationships
-    
-    setup_relationships()
-    Base.metadata.create_all(bind=engine)
+user_campaign_association = Table(
+    'user_campaign_association',
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey("users.id"), primary_key=True), 
+    Column('campaign_id', Integer, ForeignKey("campaigns.id"), primary_key=True), 
+    Column('joined_at', DateTime, default=datetime.now(timezone.utc))
+)

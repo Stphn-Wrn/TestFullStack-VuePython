@@ -1,7 +1,7 @@
 from datetime import timedelta
 from flask_jwt_extended import create_access_token
-from backend.src.users.models import User
-from backend.src.core.database import db_session
+from users.models import User
+from core.database import db_session
 
 class UserService:
     @staticmethod
