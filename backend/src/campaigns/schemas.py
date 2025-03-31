@@ -13,5 +13,4 @@ class CampaignSchema(Schema):
     created_at = fields.DateTime(dump_only=True)
     owner_id = fields.Int(required=True)
     
-    # Pour inclure les données de l'owner lors du chargement/dump
     owner = fields.Nested(UserSchema, dump_only=True)

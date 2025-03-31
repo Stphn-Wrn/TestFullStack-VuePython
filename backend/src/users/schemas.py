@@ -9,5 +9,4 @@ class UserSchema(Schema):
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
     
-    # Pour la création d'utilisateur (sans le hash)
     password = fields.Str(load_only=True, required=True, validate=validate.Length(min=6))
