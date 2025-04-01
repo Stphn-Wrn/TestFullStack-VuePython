@@ -11,6 +11,7 @@ RUN apt -y update \
     && pip install poetry \
     && pip install greenlet \
     && pip install marshmallow flask-marshmallow \
+    && pip install flasgger \
     && pip install flask-jwt-extended \
     && apt install -y libpq-dev gcc \
     && poetry config virtualenvs.create false
