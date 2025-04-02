@@ -110,6 +110,9 @@ def login():
             password=data['password']
         )
 
+        if not user:
+            return jsonify({"error": "Invalid credentials"}), 401
+
         token = create_access_token(
             identity=str(user.id),
             expires_delta=timedelta(hours=1)
@@ -124,7 +127,7 @@ def login():
     except ValueError as e:
         return jsonify({"error": str(e)}), 401
     except Exception as e:
-        logging.exception("Login error")
+        logging.exception(f"Unexpected error during login: {e}")
         return jsonify({"error": "Login failed"}), 500
 
 
@@ -170,3 +173,4 @@ def get_current_user():
         return jsonify({"error": "Server error"}), 500
     finally:
         session.close()
+        

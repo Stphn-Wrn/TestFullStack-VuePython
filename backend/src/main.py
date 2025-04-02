@@ -1,16 +1,15 @@
 from flask import Flask
 from flasgger import Swagger
-from datetime import timedelta
-from flask_jwt_extended import JWTManager  
+from datetime import timedelta, datetime, timezone
+from flask_jwt_extended import JWTManager, set_access_cookies, create_access_token, get_jwt, get_jwt_identity
 from src.campaigns.routes import hello_world_bp
 from src.users.routes import auth_bp
 from src.swagger_definitions import swagger_template
 
-import os
+import os, logging
 
 app = Flask(__name__)
 
-# Configuration Swagger
 app.config['SWAGGER'] = {
     'title': 'Campaign API',
     'uiversion': 3,
@@ -18,22 +17,44 @@ app.config['SWAGGER'] = {
 }
 swagger = Swagger(app, template=swagger_template)
 
-# Configuration JWT
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "default_secret_key")
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=1)  
+app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=7)    
+app.config["JWT_TOKEN_LOCATION"] = ["headers", "cookies"]  
 jwt = JWTManager(app)
 
-# Enregistrement des Blueprints
 app.register_blueprint(hello_world_bp, url_prefix="/hello")
 app.register_blueprint(auth_bp, url_prefix="/auth")
 
-# CORS Headers
+
 @app.after_request
 def add_header(response):
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,POST,DELETE,PATCH,OPTIONS')
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
+
+def refresh_expiring_jwts(response):
+    try:
+        jwt_data = get_jwt()
+        if not jwt_data:
+            return response
+
+        exp_timestamp = jwt_data.get("exp")
+        if not exp_timestamp:
+            return response
+
+        now = datetime.now(timezone.utc)
+        remaining_time = exp_timestamp - datetime.timestamp(now)
+
+        if remaining_time < 1:  
+            access_token = create_access_token(identity=get_jwt_identity())
+            set_access_cookies(response, access_token)
+
+        return response
+    except Exception as e:
+        logging.exception(f"Error refreshing JWT: {e}")
+        return response
 
 @app.errorhandler(RuntimeError)
 def handle_runtime_error(error: RuntimeError):

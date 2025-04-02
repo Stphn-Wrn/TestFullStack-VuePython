@@ -13,6 +13,7 @@ RUN apt -y update \
     && pip install Flask-Limiter \
     && pip install marshmallow flask-marshmallow \
     && pip install -U Flask-SQLAlchemy \
+    && pip install Flask-Caching \
     && pip install flasgger \
     && pip install flask-jwt-extended \
     && apt install -y libpq-dev gcc \

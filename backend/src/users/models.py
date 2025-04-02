@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 from src.core.database import Base
