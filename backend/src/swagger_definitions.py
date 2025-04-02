@@ -16,21 +16,52 @@ swagger_template = {
             "name": "Authorization",
             "in": "header",
             "description": "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'"
+        },
+        "CSRFToken": {
+            "type": "apiKey",
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "description": "CSRF Token for protection against cross-site request forgery"
         }
     },
     "definitions": {
         "Campaign": {
             "type": "object",
+            "required": ["name", "start_date", "end_date", "owner_id"],
             "properties": {
-                "id": {"type": "integer"},
-                "name": {"type": "string"},
+                "id": {"type": "integer", "readOnly": True},
+                "name": {"type": "string", "minLength": 3, "maxLength": 100},
                 "description": {"type": "string"},
                 "start_date": {"type": "string", "format": "date-time"},
                 "end_date": {"type": "string", "format": "date-time"},
-                "budget": {"type": "integer"},
+                "budget": {"type": "integer", "minimum": 0},
                 "status": {"type": "boolean"},
-                "created_at": {"type": "string", "format": "date-time"},
-                "owner_id": {"type": "integer"}
+                "created_at": {"type": "string", "format": "date-time", "readOnly": True},
+                "owner_id": {"type": "integer"},
+                "owner": {"$ref": "#/definitions/User"}
+            }
+        },
+        "CampaignCreate": {
+            "type": "object",
+            "required": ["name", "start_date", "end_date"],
+            "properties": {
+                "name": {"type": "string", "minLength": 3, "maxLength": 100},
+                "description": {"type": "string"},
+                "start_date": {"type": "string", "format": "date-time"},
+                "end_date": {"type": "string", "format": "date-time"},
+                "budget": {"type": "integer", "minimum": 0},
+                "status": {"type": "boolean"}
+            }
+        },
+        "CampaignUpdate": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "minLength": 3, "maxLength": 100},
+                "description": {"type": "string"},
+                "start_date": {"type": "string", "format": "date-time"},
+                "end_date": {"type": "string", "format": "date-time"},
+                "budget": {"type": "integer", "minimum": 0},
+                "status": {"type": "boolean"}
             }
         },
         "User": {
@@ -59,6 +90,154 @@ swagger_template = {
                 "password": {"type": "string"}
             }
         },
-        
-    }
+        "ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "message": {"type": "string"},
+                "errors": {"type": "object"}
+            }
+        },
+        "SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "message": {"type": "string"},
+                "data": {"type": "object"},
+                "csrf_token": {"type": "string"}
+            }
+        }
+    },
+    "paths": {
+        "/api/campaigns": {
+            "get": {
+                "tags": ["Campaigns"],
+                "summary": "Get all campaigns",
+                "description": "Returns a list of all campaigns for the authenticated user",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "A list of campaigns",
+                        "schema": {
+                            "type": "array",
+                            "items": {"$ref": "#/definitions/Campaign"}
+                        }
+                    },
+                    "401": {"description": "Unauthorized - Invalid or missing JWT"},
+                    "500": {"description": "Internal server error"}
+                }
+            },
+            "post": {
+                "tags": ["Campaigns"],
+                "summary": "Create a new campaign",
+                "description": "Creates a new campaign with the provided data",
+                "security": [{"BearerAuth": []}, {"CSRFToken": []}],
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": True,
+                        "schema": {"$ref": "#/definitions/CampaignCreate"}
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Campaign created successfully",
+                        "schema": {"$ref": "#/definitions/SuccessResponse"}
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "schema": {"$ref": "#/definitions/ErrorResponse"}
+                    },
+                    "401": {"description": "Unauthorized - Invalid or missing JWT"},
+                    "500": {"description": "Internal server error"}
+                }
+            }
+        },
+        "/api/campaigns/{campaign_id}": {
+            "get": {
+                "tags": ["Campaigns"],
+                "summary": "Get a specific campaign",
+                "description": "Returns details for a specific campaign",
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "campaign_id",
+                        "in": "path",
+                        "description": "ID of the campaign to retrieve",
+                        "required": True,
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Campaign details",
+                        "schema": {"$ref": "#/definitions/Campaign"}
+                    },
+                    "401": {"description": "Unauthorized - Invalid or missing JWT"},
+                    "404": {"description": "Campaign not found"},
+                    "500": {"description": "Internal server error"}
+                }
+            },
+            "put": {
+                "tags": ["Campaigns"],
+                "summary": "Update a campaign",
+                "description": "Updates an existing campaign",
+                "security": [{"BearerAuth": []}, {"CSRFToken": []}],
+                "parameters": [
+                    {
+                        "name": "campaign_id",
+                        "in": "path",
+                        "description": "ID of the campaign to update",
+                        "required": True,
+                        "type": "integer"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": True,
+                        "schema": {"$ref": "#/definitions/CampaignUpdate"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Campaign updated successfully",
+                        "schema": {"$ref": "#/definitions/SuccessResponse"}
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "schema": {"$ref": "#/definitions/ErrorResponse"}
+                    },
+                    "401": {"description": "Unauthorized - Invalid or missing JWT"},
+                    "403": {"description": "Forbidden - User doesn't own the campaign"},
+                    "404": {"description": "Campaign not found"},
+                    "500": {"description": "Internal server error"}
+                }
+            },
+            "delete": {
+                "tags": ["Campaigns"],
+                "summary": "Delete a campaign",
+                "description": "Deletes an existing campaign",
+                "security": [{"BearerAuth": []}, {"CSRFToken": []}],
+                "parameters": [
+                    {
+                        "name": "campaign_id",
+                        "in": "path",
+                        "description": "ID of the campaign to delete",
+                        "required": True,
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Campaign deleted successfully",
+                        "schema": {"$ref": "#/definitions/SuccessResponse"}
+                    },
+                    "401": {"description": "Unauthorized - Invalid or missing JWT"},
+                    "403": {"description": "Forbidden - User doesn't own the campaign"},
+                    "404": {"description": "Campaign not found"},
+                    "500": {"description": "Internal server error"}
+                }
+            }
+        }
+    },
+    "security": [{"BearerAuth": []}]
 }

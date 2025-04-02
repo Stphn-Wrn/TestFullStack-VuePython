@@ -13,35 +13,6 @@ import logging
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 @auth_bp.route('/register', methods=['POST'])
-@swag_from({
-    'tags': ['Authentication'],
-    'description': 'Register a new user',
-    'parameters': [
-        {
-            'name': 'body',
-            'in': 'body',
-            'required': True,
-            'schema': {
-                '$ref': '#/definitions/RegisterRequest'
-            }
-        }
-    ],
-    'responses': {
-        201: {
-            'description': 'User created successfully',
-            'schema': {
-                'type': 'object',
-                'properties': {
-                    'message': {'type': 'string'},
-                    'token': {'type': 'string'},
-                    'user_id': {'type': 'integer'}
-                }
-            }
-        },
-        400: {'description': 'Invalid input data'},
-        500: {'description': 'Internal server error'}
-    }
-})
 def register():
     try:
         data = request.get_json()
@@ -69,36 +40,6 @@ def register():
         return jsonify({"error": "Registration failed"}), 500
 
 @auth_bp.route('/login', methods=['POST'])
-@swag_from({
-    'tags': ['Authentication'],
-    'description': 'Authenticate a user',
-    'parameters': [
-        {
-            'name': 'body',
-            'in': 'body',
-            'required': True,
-            'schema': {
-                '$ref': '#/definitions/LoginRequest'
-            }
-        }
-    ],
-    'responses': {
-        200: {
-            'description': 'Login successful',
-            'schema': {
-                'type': 'object',
-                'properties': {
-                    'message': {'type': 'string'},
-                    'token': {'type': 'string'},
-                    'user': {'$ref': '#/definitions/User'}
-                }
-            }
-        },
-        400: {'description': 'Email and password required'},
-        401: {'description': 'Invalid credentials'},
-        500: {'description': 'Internal server error'}
-    }
-})
 def login():
     try:
         data = request.get_json()
@@ -134,22 +75,6 @@ def login():
 
 @auth_bp.route('/me', methods=['GET'])
 @jwt_required()
-@swag_from({
-    'tags': ['Authentication'],
-    'description': 'Get current user details',
-    'security': [{'BearerAuth': []}],
-    'responses': {
-        200: {
-            'description': 'User details',
-            'schema': {
-                '$ref': '#/definitions/User'
-            }
-        },
-        401: {'description': 'Unauthorized'},
-        404: {'description': 'User not found'},
-        500: {'description': 'Server error'}
-    }
-})
 def get_current_user():
     try:
         current_user_id = get_jwt_identity()
