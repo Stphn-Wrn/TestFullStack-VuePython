@@ -10,7 +10,9 @@ RUN apt -y update \
     && pip install --upgrade pip \
     && pip install poetry \
     && pip install greenlet \
+    && pip install Flask-Limiter \
     && pip install marshmallow flask-marshmallow \
+    && pip install -U Flask-SQLAlchemy \
     && pip install flasgger \
     && pip install flask-jwt-extended \
     && apt install -y libpq-dev gcc \

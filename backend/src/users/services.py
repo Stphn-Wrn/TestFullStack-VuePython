@@ -1,6 +1,6 @@
 from datetime import timedelta
 from flask_jwt_extended import create_access_token, get_jwt_identity
-from src.users.models import User
+from users.models import User
 from src.core.database import db_session
 class UserService:
     @staticmethod
@@ -9,17 +9,16 @@ class UserService:
         try:
             if session.query(User).filter_by(email=email).first():
                 raise ValueError("Email already exists")
-            
+            if session.query(User).filter_by(username=username).first():
+                raise ValueError("Username already exists")
+
             user = User(username=username, email=email)
             user.set_password(password)
             session.add(user)
             session.commit()
-            return user.id
-        except Exception as e:
-            session.rollback()
-            raise
+            return user.id 
         finally:
-            session.remove()
+            session.close()
 
     @staticmethod
     def generate_auth_token(user_id, expires_in=3600):
