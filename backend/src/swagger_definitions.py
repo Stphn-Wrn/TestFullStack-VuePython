@@ -237,6 +237,97 @@ swagger_template = {
                     "500": {"description": "Internal server error"}
                 }
             }
+        },
+        "/auth/register": {
+            "post": {
+                "tags": ["Authentication"],
+                "summary": "Register a new user",
+                "description": "Creates a new user account",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": True,
+                        "schema": {"$ref": "#/definitions/RegisterRequest"}
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "User created successfully",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {"type": "string"},
+                                "token": {"type": "string"},
+                                "user_id": {"type": "integer"}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "schema": {"$ref": "#/definitions/ErrorResponse"}
+                    },
+                    "500": {"description": "Registration failed"}
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "tags": ["Authentication"],
+                "summary": "User login",
+                "description": "Authenticates a user and returns a JWT token",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": True,
+                        "schema": {"$ref": "#/definitions/LoginRequest"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {"type": "string"},
+                                "token": {"type": "string"},
+                                "user": {"$ref": "#/definitions/User"}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Email and password required",
+                        "schema": {"$ref": "#/definitions/ErrorResponse"}
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {"$ref": "#/definitions/ErrorResponse"}
+                    },
+                    "500": {"description": "Login failed"}
+                }
+            }
+        },
+        "/auth/me": {
+            "get": {
+                "tags": ["Authentication"],
+                "summary": "Get current user info",
+                "description": "Returns information about the currently authenticated user",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "User details",
+                        "schema": {"$ref": "#/definitions/User"}
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {"$ref": "#/definitions/ErrorResponse"}
+                    },
+                    "401": {"description": "Unauthorized - Invalid or missing JWT"},
+                    "404": {"description": "User not found"},
+                    "500": {"description": "Server error"}
+                }
+            }
         }
     },
     "security": [{"BearerAuth": []}]
