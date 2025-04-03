@@ -15,8 +15,5 @@ class Campaign(Base):
     status = Column(Boolean)
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
     owner_id = Column(Integer, ForeignKey('users.id'))
-    
-    # Supprimez ou commentez cette ligne si la colonne n'existe pas en base
-    # updated_at = Column(DateTime, onupdate=datetime.now(timezone.utc))
-    
+       
     owner = relationship("User", lazy='joined')

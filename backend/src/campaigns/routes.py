@@ -14,7 +14,6 @@ def create_campaign():
         current_user_id = get_jwt_identity()
         data = request.get_json()
         
-        # Appel du service avec owner_id séparé
         campaign = CampaignService.create_campaign(data, owner_id=current_user_id)
         
         return jsonify({

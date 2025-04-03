@@ -1,14 +1,18 @@
 from flask import Blueprint, request, jsonify
-from werkzeug.exceptions import BadRequest, Unauthorized
 from users.services import UserService
 from users.schemas import UserSchema
 from users.models import User
 from datetime import timedelta
 from src.core.database import db_session
-from flasgger import swag_from
 
-from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
+
+from flask_jwt_extended import (
+    jwt_required,
+    get_jwt_identity,
+    create_access_token
+    )
 import logging
+
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -19,7 +23,7 @@ def register():
         schema = UserSchema()
         user_data = schema.load(data)
         
-        user_id = UserService.create_user(  # Reçoit l'ID seulement
+        user_id = UserService.create_user(
             username=user_data['username'],
             email=user_data['email'],
             password=user_data['password']

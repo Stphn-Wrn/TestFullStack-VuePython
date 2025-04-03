@@ -1,12 +1,23 @@
 from flask import Flask
 from flasgger import Swagger
-from datetime import timedelta, datetime, timezone
-from flask_jwt_extended import JWTManager, set_access_cookies, create_access_token, get_jwt, get_jwt_identity
+from datetime import (
+    timedelta,
+    datetime,
+    timezone
+)
+from flask_jwt_extended import (
+    JWTManager,
+    set_access_cookies,
+    create_access_token,
+    get_jwt,
+    get_jwt_identity
+)
 from src.campaigns.routes import campaign_bp
 from src.users.routes import auth_bp
 from src.swagger_definitions import swagger_template
 
 import os, logging
+
 app = Flask(__name__)
 
 app.config['SWAGGER'] = {
@@ -16,12 +27,10 @@ app.config['SWAGGER'] = {
 }
 swagger = Swagger(app, template=swagger_template)
 
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "default_secret_key")
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=1)  
-app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=7)    
-app.config["JWT_TOKEN_LOCATION"] = ["headers", "cookies"] 
-
-
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "votre_super_secret_ici")
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=15)
+app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=30)
+app.config["JWT_TOKEN_LOCATION"] = ["headers"]
 jwt = JWTManager(app)
 
 app.register_blueprint(campaign_bp, url_prefix="/api/campaigns")
