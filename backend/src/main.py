@@ -68,20 +68,16 @@ def after_request_handler(response):
 def handle_response(response):
     """Centralized response handler for CORS and JWT refresh"""
     try:
-        # Skip non-API responses and OPTIONS requests
         if not response.is_json or request.method == 'OPTIONS':
             return response
             
-        # Vérifie d'abord la présence d'un JWT valide
         try:
-            verify_jwt_in_request(optional=True)  # Ne renvoie pas d'erreur si absent
+            verify_jwt_in_request(optional=True)  
             jwt_data = get_jwt()
             
-            # Refresh JWT si nécessaire
             response = refresh_expiring_jwts(response, jwt_data)
             
         except Exception as jwt_error:
-            # Log l'erreur JWT si nécessaire
             app.logger.debug(f"JWT verification skipped: {str(jwt_error)}")
             
         return response
@@ -93,11 +89,9 @@ def handle_response(response):
 def refresh_expiring_jwts(response, jwt_data=None):
     """Refresh JWT tokens if they're about to expire"""
     try:
-        # Vérifie si on a des données JWT valides
         if not jwt_data:
             return response
 
-        # Vérifie si le token est proche de l'expiration
         exp_timestamp = jwt_data.get("exp")
         if not exp_timestamp:
             return response
