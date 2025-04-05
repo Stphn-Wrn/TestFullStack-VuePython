@@ -9,8 +9,10 @@ from src.core.database import db_session
 from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity,
-    create_access_token
-    )
+    create_access_token,
+    set_access_cookies,
+    set_refresh_cookies
+)
 import logging
 
 
@@ -29,52 +31,42 @@ def register():
             password=user_data['password']
         )
         
-        token = UserService.generate_auth_token(user_id)
+        tokens = UserService.generate_auth_tokens(user_id)
         
-        return jsonify({
+        response = jsonify({
             "message": "User created successfully",
-            "token": token,
             "user_id": user_id
-        }), 201
+        })
         
+        set_access_cookies(response, tokens["access_token"])
+        set_refresh_cookies(response, tokens["refresh_token"])
+        
+        return response, 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        logging.exception("Registration error")
-        return jsonify({"error": "Registration failed"}), 500
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
     try:
         data = request.get_json()
-        if not data or not data.get('email') or not data.get('password'):
-            return jsonify({"error": "Email and password required"}), 400
-
         user = UserService.authenticate(
             email=data['email'],
             password=data['password']
         )
 
-        if not user:
-            return jsonify({"error": "Invalid credentials"}), 401
-
-        token = create_access_token(
-            identity=str(user.id),
-            expires_delta=timedelta(hours=1)
-        )
-
-        return jsonify({
+        tokens = UserService.generate_auth_tokens(user.id)
+        
+        response = jsonify({
             "message": "Login successful",
-            "token": token,
             "user": UserSchema().dump(user)
         })
-
+        
+        set_access_cookies(response, tokens["access_token"])
+        set_refresh_cookies(response, tokens["refresh_token"])
+        
+        return response
     except ValueError as e:
         return jsonify({"error": str(e)}), 401
-    except Exception as e:
-        logging.exception(f"Unexpected error during login: {e}")
-        return jsonify({"error": "Login failed"}), 500
-
 
 @auth_bp.route('/me', methods=['GET'])
 @jwt_required()
@@ -102,3 +94,31 @@ def get_current_user():
     finally:
         session.close()
         
+@auth_bp.route('/refresh', methods=['POST'])
+@jwt_required(refresh=True)  
+def refresh():
+    try:
+        current_user_id = get_jwt_identity()
+        new_access_token = create_access_token(identity=current_user_id)
+        
+        response = jsonify({
+            "message": "Token refreshed successfully",
+            "access_token": new_access_token
+        })
+        
+        # Si vous utilisez des cookies
+        set_access_cookies(response, new_access_token)
+        
+        return response, 200
+        
+    except Exception as e:
+        logging.exception("Token refresh failed")
+        return jsonify({"error": "Token refresh failed"}), 401
+    
+@auth_bp.route('/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    response = jsonify({"message": "Logout successful"})
+    response.set_cookie('access_token_cookie', '', expires=0)
+    response.set_cookie('refresh_token_cookie', '', expires=0)
+    return response

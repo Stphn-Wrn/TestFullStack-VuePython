@@ -97,12 +97,28 @@ swagger_template = {
                 "errors": {"type": "object"}
             }
         },
+        "AuthResponse": {
+            "type": "object",
+            "properties": {
+                "message": {"type": "string"},
+                "user_id": {"type": "integer"},
+                "user": {"$ref": "#/definitions/User"},
+                "access_token": {"type": "string"},
+                "refresh_token": {"type": "string"}
+            }
+        },
+        "TokenRefreshResponse": {
+            "type": "object",
+            "properties": {
+                "message": {"type": "string"},
+                "access_token": {"type": "string"}
+            }
+        },
         "SuccessResponse": {
             "type": "object",
             "properties": {
                 "message": {"type": "string"},
-                "data": {"type": "object"},
-                "csrf_token": {"type": "string"}
+                "data": {"type": "object"}
             }
         }
     },
@@ -254,14 +270,7 @@ swagger_template = {
                 "responses": {
                     "201": {
                         "description": "User created successfully",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {"type": "string"},
-                                "token": {"type": "string"},
-                                "user_id": {"type": "integer"}
-                            }
-                        }
+                        "schema": {"$ref": "#/definitions/AuthResponse"}
                     },
                     "400": {
                         "description": "Validation error",
@@ -287,14 +296,7 @@ swagger_template = {
                 "responses": {
                     "200": {
                         "description": "Login successful",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {"type": "string"},
-                                "token": {"type": "string"},
-                                "user": {"$ref": "#/definitions/User"}
-                            }
-                        }
+                        "schema": {"$ref": "#/definitions/AuthResponse"}
                     },
                     "400": {
                         "description": "Email and password required",
@@ -326,6 +328,46 @@ swagger_template = {
                     "401": {"description": "Unauthorized - Invalid or missing JWT"},
                     "404": {"description": "User not found"},
                     "500": {"description": "Server error"}
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "tags": ["Authentication"],
+                "summary": "Refresh access token",
+                "description": "Generates a new access token using the refresh token",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Token refreshed successfully",
+                        "schema": {"$ref": "#/definitions/TokenRefreshResponse"}
+                    },
+                    "401": {
+                        "description": "Invalid or expired refresh token",
+                        "schema": {"$ref": "#/definitions/ErrorResponse"}
+                    },
+                    "500": {"description": "Token refresh failed"}
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "tags": ["Authentication"],
+                "summary": "User logout",
+                "description": "Invalidates the current session tokens",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Logout successful",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {"type": "string"}
+                            }
+                        }
+                    },
+                    "401": {"description": "Unauthorized - Invalid or missing JWT"},
+                    "500": {"description": "Logout failed"}
                 }
             }
         }

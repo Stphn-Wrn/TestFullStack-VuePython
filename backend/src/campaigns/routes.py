@@ -25,8 +25,8 @@ campaign_bp = Blueprint('campaigns', __name__, url_prefix='/api/campaigns')
 def create_campaign():
     try:
         current_user_id = get_jwt_identity()
-        data = campaign_schema.load(request.get_json())  # Validation complète
-        data['owner_id'] = current_user_id  # Ajout sécurisé
+        data = campaign_schema.load(request.get_json()) 
+        data['owner_id'] = current_user_id  
         
         campaign = CampaignService.create_campaign(data)
         return jsonify({

@@ -1,5 +1,9 @@
 from datetime import timedelta
-from flask_jwt_extended import create_access_token, get_jwt_identity
+from flask_jwt_extended import (
+    create_access_token, 
+    get_jwt_identity, 
+    create_refresh_token
+)
 from src.users.models import User
 from src.core.database import db_session
 class UserService:
@@ -52,3 +56,23 @@ class UserService:
             return user
         finally:
             session.close()
+            
+    @staticmethod
+    def generate_auth_tokens(user_id):
+        """Génère à la fois access et refresh tokens"""
+        return {
+            "access_token": create_access_token(identity=str(user_id)),
+            "refresh_token": create_refresh_token(identity=str(user_id))
+        }
+
+    @staticmethod
+    def refresh_tokens(refresh_token):
+        """Rafraîchit les tokens à partir d'un refresh token valide"""
+        try:
+            current_user_id = get_jwt_identity()
+            return {
+                "access_token": create_access_token(identity=current_user_id),
+                "refresh_token": create_refresh_token(identity=current_user_id)
+            }
+        except Exception as e:
+            raise ValueError("Invalid refresh token")

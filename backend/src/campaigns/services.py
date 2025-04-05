@@ -12,13 +12,9 @@ class CampaignService:
     def create_campaign(data, owner_id):
         session = db_session()
         try:
-            # Validation sans owner_id
             schema = CampaignSchema()
             validated_data = schema.load(data)
-            
-            # Ajout sécurisé de l'owner_id
             validated_data['owner_id'] = owner_id
-            
             campaign = Campaign(**validated_data)
             session.add(campaign)
             session.commit()
@@ -38,7 +34,7 @@ class CampaignService:
             current_user_id = get_jwt_identity()
             campaign = session.query(Campaign).filter(
                 Campaign.id == campaign_id,
-                Campaign.owner_id == current_user_id  # Sécurité JWT
+                Campaign.owner_id == current_user_id
             ).first()
             
             if not campaign:
@@ -60,7 +56,6 @@ class CampaignService:
             if not campaign:
                 raise ValueError("Campaign not found or access denied")
             
-            # Validation partielle pour les updates
             schema = CampaignUpdateSchema()
             validated_data = schema.load(update_data, partial=True)
             

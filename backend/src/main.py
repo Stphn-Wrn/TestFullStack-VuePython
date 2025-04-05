@@ -5,10 +5,13 @@ from datetime import (
     datetime,
     timezone
 )
+from datetime import timedelta, datetime, timezone
 from flask_jwt_extended import (
     JWTManager,
-    set_access_cookies,
     create_access_token,
+    create_refresh_token,
+    set_access_cookies,
+    set_refresh_cookies,
     get_jwt,
     get_jwt_identity,
     jwt_required
@@ -31,7 +34,10 @@ swagger = Swagger(app, template=swagger_template)
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "votre_super_secret_ici")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=15)
 app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=30)
-app.config["JWT_TOKEN_LOCATION"] = ["headers"]
+app.config["JWT_TOKEN_LOCATION"] = ["headers", "cookies"] 
+app.config["JWT_COOKIE_SECURE"] = True  
+app.config["JWT_COOKIE_CSRF_PROTECT"] = True  
+
 jwt = JWTManager(app)
 
 app.register_blueprint(campaign_bp, url_prefix="/api/campaigns")
@@ -51,24 +57,23 @@ def add_header(response):
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
     return response
 
-@jwt_required()
+@app.after_request
 def refresh_expiring_jwts(response):
-    print("hit")
     try:
+        # Ne rafraîchir que si c'est une requête API réussie
+        if not 200 <= response.status_code < 300:
+            return response
+
+        # Vérifier si le token est sur le point d'expirer
         jwt_data = get_jwt()
-        if not jwt_data:
-            return response
-
         exp_timestamp = jwt_data.get("exp")
-        if not exp_timestamp:
-            return response
-
         now = datetime.now(timezone.utc)
-        remaining_time = exp_timestamp - datetime.timestamp(now)
+        target_timestamp = datetime.timestamp(now + timedelta(minutes=5))  # 5 min avant expiration
 
-        if remaining_time < 1:  
-            access_token = create_access_token(identity=get_jwt_identity())
-            set_access_cookies(response, access_token)
+        if exp_timestamp and exp_timestamp < target_timestamp:
+            current_user_id = get_jwt_identity()
+            new_access_token = create_access_token(identity=current_user_id)
+            set_access_cookies(response, new_access_token)
 
         return response
     except Exception as e:
