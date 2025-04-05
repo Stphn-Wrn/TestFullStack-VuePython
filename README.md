@@ -10,3 +10,5 @@ THEN
 ./start_dev.sh
 ```
 
+```
+$ 

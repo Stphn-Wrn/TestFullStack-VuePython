@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, Response
 from flasgger import Swagger
 from datetime import (
     timedelta,
@@ -14,70 +14,105 @@ from flask_jwt_extended import (
     set_refresh_cookies,
     get_jwt,
     get_jwt_identity,
+    verify_jwt_in_request,
     jwt_required
 )
 from src.campaigns.routes import campaign_bp
 from src.users.routes import auth_bp
 from src.swagger_definitions import swagger_template
+from flask_cors import CORS
+
 
 import os, logging
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True, origins=os.getenv("VITE_API_URL", "http://localhost:5173",), methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+    expose_headers=["Set-Cookie"])
 
 app.config['SWAGGER'] = {
-    'title': 'Campaign API',
+    'title': 'API Documentation',
     'uiversion': 3,
-    'specs_route': '/docs/'
+    'specs_route': '/docs/',
+    'securityDefinitions': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+        }
+    }
 }
-swagger = Swagger(app, template=swagger_template)
 
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "votre_super_secret_ici")
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=15)
-app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=30)
-app.config["JWT_TOKEN_LOCATION"] = ["headers", "cookies"] 
-app.config["JWT_COOKIE_SECURE"] = True  
-app.config["JWT_COOKIE_CSRF_PROTECT"] = True  
+app.config.update({
+    "JWT_SECRET_KEY": os.getenv("JWT_SECRET_KEY", "your_super_secret_here"),
+    "JWT_ACCESS_TOKEN_EXPIRES": timedelta(minutes=15),
+    "JWT_REFRESH_TOKEN_EXPIRES": timedelta(days=30),
+    "JWT_TOKEN_LOCATION": ["headers", "cookies"],
+    "JWT_COOKIE_SECURE": True,
+    "JWT_COOKIE_CSRF_PROTECT": True,
+    "JWT_COOKIE_SAMESITE": "Lax"
+})
 
 jwt = JWTManager(app)
-
+swagger = Swagger(app, template=swagger_template)
 app.register_blueprint(campaign_bp, url_prefix="/api/campaigns")
 app.register_blueprint(auth_bp, url_prefix="/auth")
 
 
 @app.after_request
 def after_request_handler(response):
-    response = add_header(response)
     response = refresh_expiring_jwts(response)
+    response = handle_response(response)
     return response
 
-def add_header(response):
-    response.headers['Access-Control-Allow-Origin'] = os.getenv("FRONTEND_URL", "http://localhost:3000") 
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-CSRF-TOKEN'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    return response
-
-@app.after_request
-def refresh_expiring_jwts(response):
+def handle_response(response):
+    """Centralized response handler for CORS and JWT refresh"""
     try:
-        # Ne rafraîchir que si c'est une requête API réussie
-        if not 200 <= response.status_code < 300:
+        # Skip non-API responses and OPTIONS requests
+        if not response.is_json or request.method == 'OPTIONS':
+            return response
+            
+        # Vérifie d'abord la présence d'un JWT valide
+        try:
+            verify_jwt_in_request(optional=True)  # Ne renvoie pas d'erreur si absent
+            jwt_data = get_jwt()
+            
+            # Refresh JWT si nécessaire
+            response = refresh_expiring_jwts(response, jwt_data)
+            
+        except Exception as jwt_error:
+            # Log l'erreur JWT si nécessaire
+            app.logger.debug(f"JWT verification skipped: {str(jwt_error)}")
+            
+        return response
+    except Exception as e:
+        app.logger.error(f"Error in response handler: {str(e)}")
+        return response
+    
+@app.after_request
+def refresh_expiring_jwts(response, jwt_data=None):
+    """Refresh JWT tokens if they're about to expire"""
+    try:
+        # Vérifie si on a des données JWT valides
+        if not jwt_data:
             return response
 
-        # Vérifier si le token est sur le point d'expirer
-        jwt_data = get_jwt()
+        # Vérifie si le token est proche de l'expiration
         exp_timestamp = jwt_data.get("exp")
-        now = datetime.now(timezone.utc)
-        target_timestamp = datetime.timestamp(now + timedelta(minutes=5))  # 5 min avant expiration
+        if not exp_timestamp:
+            return response
 
-        if exp_timestamp and exp_timestamp < target_timestamp:
-            current_user_id = get_jwt_identity()
-            new_access_token = create_access_token(identity=current_user_id)
-            set_access_cookies(response, new_access_token)
+        now = datetime.now(timezone.utc)
+        refresh_threshold = datetime.timestamp(now + timedelta(minutes=5))
+
+        if exp_timestamp < refresh_threshold:
+            current_user = get_jwt_identity()
+            new_token = create_access_token(identity=current_user)
+            set_access_cookies(response, new_token)
 
         return response
     except Exception as e:
-        logging.exception(f"Error refreshing JWT: {e}")
+        app.logger.error(f"JWT refresh error: {str(e)}")
         return response
 
 @app.errorhandler(RuntimeError)

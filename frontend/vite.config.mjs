@@ -16,7 +16,6 @@ export default defineConfig({
     Vue({
       template: { transformAssetUrls }
     }),
-    // https://github.com/vuetifyjs/vuetify-loader/tree/master/packages/vite-plugin#readme
     Vuetify({
       autoImport: true,
       styles: {
@@ -49,7 +48,14 @@ export default defineConfig({
     ],
   },
   server: {
-    port: 3000,
+    proxy: {
+      '/api/auth': {  
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api\/auth/, '/auth') 
+      }
+    }
   },
   css: {
     preprocessorOptions: {

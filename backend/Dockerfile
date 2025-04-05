@@ -13,9 +13,9 @@ RUN apt -y update \
     && pip install Flask-Limiter \
     && pip install marshmallow flask-marshmallow \
     && pip install -U Flask-SQLAlchemy \
+    && pip install flask-cors \
     && pip install Flask-Caching \
-    && pip show flask-wtf \
-    && pip install flasgger \
+    && pip install flask-wtf flasgger\
     && pip install pytest pytest-mock factory_boy \
     && pip install flask-jwt-extended \
     && apt install -y libpq-dev gcc \
