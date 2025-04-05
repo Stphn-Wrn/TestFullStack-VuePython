@@ -1,7 +1,15 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Table, Column, Integer, DateTime, ForeignKey
+from sqlalchemy import (
+    create_engine, 
+    Table, 
+    Column, 
+    Integer, 
+    DateTime, 
+    ForeignKey
+)
+from sqlalchemy.orm import (
+    declarative_base, 
+    sessionmaker
+)
 from datetime import datetime, timezone
 import os 
 

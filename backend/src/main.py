@@ -10,7 +10,8 @@ from flask_jwt_extended import (
     set_access_cookies,
     create_access_token,
     get_jwt,
-    get_jwt_identity
+    get_jwt_identity,
+    jwt_required
 )
 from src.campaigns.routes import campaign_bp
 from src.users.routes import auth_bp
@@ -38,14 +39,21 @@ app.register_blueprint(auth_bp, url_prefix="/auth")
 
 
 @app.after_request
+def after_request_handler(response):
+    response = add_header(response)
+    response = refresh_expiring_jwts(response)
+    return response
+
 def add_header(response):
-    response.headers['Access-Control-Allow-Origin'] = 'http://127.0.0.1:5173'  
+    response.headers['Access-Control-Allow-Origin'] = os.getenv("FRONTEND_URL", "http://localhost:3000") 
     response.headers['Access-Control-Allow-Credentials'] = 'true'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-CSRF-TOKEN'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
     return response
 
+@jwt_required()
 def refresh_expiring_jwts(response):
+    print("hit")
     try:
         jwt_data = get_jwt()
         if not jwt_data:

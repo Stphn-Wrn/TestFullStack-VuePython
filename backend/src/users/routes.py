@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from users.services import UserService
-from users.schemas import UserSchema
-from users.models import User
+from src.users.schemas import UserSchema
+from src.users.models import User
 from datetime import timedelta
 from src.core.database import db_session
 

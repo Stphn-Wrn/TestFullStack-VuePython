@@ -16,6 +16,7 @@ RUN apt -y update \
     && pip install Flask-Caching \
     && pip show flask-wtf \
     && pip install flasgger \
+    && pip install pytest pytest-mock factory_boy \
     && pip install flask-jwt-extended \
     && apt install -y libpq-dev gcc \
     && poetry config virtualenvs.create false

@@ -1,4 +1,8 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import (
+    Schema, 
+    fields, 
+    validate
+)
 from datetime import datetime
 
 class CampaignSchema(Schema):

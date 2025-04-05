@@ -10,9 +10,3 @@ THEN
 ./start_dev.sh
 ```
 
-
-TO DO : 
-SETUP Alembic + SQLalchemy
-
-Connexion à la BDD
-Premier model

@@ -1,6 +1,9 @@
 from src.core.database import db_session
 from src.campaigns.models import Campaign
-from src.campaigns.schemas import CampaignSchema, CampaignUpdateSchema
+from src.campaigns.schemas import (
+    CampaignSchema, 
+    CampaignUpdateSchema
+)
 from marshmallow import ValidationError
 from flask_jwt_extended import get_jwt_identity
 
@@ -71,7 +74,7 @@ class CampaignService:
             raise ValueError(f"Validation error: {e.messages}")
         except Exception as e:
             session.rollback()
-            raise
+            raise RuntimeError(e)
         finally:
             session.close()
 

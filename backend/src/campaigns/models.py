@@ -1,8 +1,15 @@
 from datetime import datetime, timezone
 from src.core.database import Base
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
-
+from sqlalchemy import (
+    Column, 
+    Integer, 
+    String, 
+    DateTime, 
+    ForeignKey, 
+    Text, 
+    Boolean
+)
 class Campaign(Base):
     __tablename__ = 'campaigns'
     
