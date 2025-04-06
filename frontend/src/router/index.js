@@ -3,6 +3,12 @@ import { useAuthStore } from '../stores/authStore'
 
 const routes = [
   {
+    path: '/',
+    name: 'home',
+    component: () => import('../pages/AuthPage.vue'),
+    meta: { requiresGuest: true }
+  },
+  {
     path: '/auth',
     name: 'Auth',
     component: () => import('../pages/AuthPage.vue'),
@@ -14,7 +20,6 @@ const routes = [
     component: () => import('../pages/DashboardPage.vue'),
     meta: { requiresAuth: true }
   }
-  
 ]
 
 const router = createRouter({
@@ -23,20 +28,23 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  const auth = useAuthStore();
-  
-  if (to.meta.requiresAuth && !auth.user) {
-    await auth.fetchUser();
-    if (!auth.user) return '/auth';
+  const auth = useAuthStore()
+
+  if (to.meta.requiresAuth) {
+    const isLoggedIn = auth.user || await auth.fetchUser()
+
+    if (!isLoggedIn) {
+      return {
+        path: '/auth',
+        query: { redirectTo: to.fullPath }
+      }
+    }
   }
-  
-  if (auth.isAuthenticated && !auth.user) {
-    await auth.fetchUser();
+
+  if (to.meta.requiresGuest && auth.user) {
+    return '/dashboard'
   }
-  
-  if (to.meta.guestOnly && auth.isAuthenticated) {
-    return '/';
-  }
-});
+})
+;
 
 export default router;

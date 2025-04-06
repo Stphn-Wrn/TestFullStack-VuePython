@@ -16,10 +16,12 @@ from flask_jwt_extended import (
 import logging
 
 
-auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/register', methods=['POST'])
+@auth_bp.route('/register', methods=['POST', 'OPTIONS'])
 def register():
+    if request.method == 'OPTIONS':
+        return '', 200
     try:
         data = request.get_json()
         schema = UserSchema()
@@ -45,8 +47,10 @@ def register():
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
-@auth_bp.route('/login', methods=['POST'])
+@auth_bp.route('/login', methods=['POST', 'OPTIONS'])
 def login():
+    if request.method == 'OPTIONS':
+        return '', 200
     try:
         data = request.get_json()
         user = UserService.authenticate(
@@ -106,7 +110,6 @@ def refresh():
             "access_token": new_access_token
         })
         
-        # Si vous utilisez des cookies
         set_access_cookies(response, new_access_token)
         
         return response, 200
@@ -115,9 +118,11 @@ def refresh():
         logging.exception("Token refresh failed")
         return jsonify({"error": "Token refresh failed"}), 401
     
-@auth_bp.route('/logout', methods=['POST'])
+@auth_bp.route('/logout', methods=['POST', 'OPTIONS'])
 @jwt_required()
 def logout():
+    if request.method == 'OPTIONS':
+        return '', 200
     response = jsonify({"message": "Logout successful"})
     response.set_cookie('access_token_cookie', '', expires=0)
     response.set_cookie('refresh_token_cookie', '', expires=0)

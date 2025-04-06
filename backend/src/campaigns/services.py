@@ -52,24 +52,35 @@ class CampaignService:
                 Campaign.id == campaign_id,
                 Campaign.owner_id == current_user_id
             ).first()
-            
+
             if not campaign:
                 raise ValueError("Campaign not found or access denied")
-            
+
             schema = CampaignUpdateSchema()
             validated_data = schema.load(update_data, partial=True)
-            
+
             for key, value in validated_data.items():
                 setattr(campaign, key, value)
-                
+
             session.commit()
+
+            session.refresh(campaign)  
             return campaign
+
         except ValidationError as e:
             session.rollback()
             raise ValueError(f"Validation error: {e.messages}")
         except Exception as e:
             session.rollback()
             raise RuntimeError(e)
+        finally:
+            session.close()
+
+    @staticmethod
+    def get_user_campaigns(user_id):
+        session = db_session()
+        try:
+            return session.query(Campaign).filter(Campaign.owner_id == user_id).all()
         finally:
             session.close()
 

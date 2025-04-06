@@ -1,17 +1,21 @@
-import { createApp } from 'vue';
-import App from './App.vue';
-import router from './router';
-import { createPinia } from 'pinia';
-import { createVuetify } from 'vuetify';
-import 'vuetify/styles';
-import piniaPersistedState from 'pinia-plugin-persistedstate'
+// main.js
+import { createApp } from 'vue'
+import App from './App.vue'
+import router from './router'
+import { createPinia } from 'pinia'
+import { createVuetify } from 'vuetify'
+import 'vuetify/styles'
+import '@mdi/font/css/materialdesignicons.css'
 
-const app = createApp(App);
-const vuetify = createVuetify();
-const pinia = createPinia()
-pinia.use(piniaPersistedState)
+const vuetify = createVuetify({
+  icons: {
+    defaultSet: 'mdi', 
+  }
+})
 
-app.use(router);
-app.use(pinia)
-app.use(vuetify);
-app.mount('#app');
+const app = createApp(App)
+
+app.use(router)
+app.use(createPinia())
+app.use(vuetify)
+app.mount('#app')

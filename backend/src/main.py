@@ -26,9 +26,16 @@ from flask_cors import CORS
 import os, logging
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins=os.getenv("VITE_API_URL", "http://127.0.0.1:5173",), methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
-    expose_headers=["Set-Cookie"])
+CORS(app,
+  supports_credentials=True,
+  origins=[
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
+  ],
+  methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-CSRF-TOKEN"],
+  expose_headers=["Set-Cookie"]
+)
 
 app.config['SWAGGER'] = {
     'title': 'API Documentation',
@@ -48,7 +55,7 @@ app.config.update({
     "JWT_ACCESS_TOKEN_EXPIRES": timedelta(minutes=15),
     "JWT_REFRESH_TOKEN_EXPIRES": timedelta(days=30),
     "JWT_TOKEN_LOCATION": ["headers", "cookies"],
-    "JWT_COOKIE_SECURE": True,
+    "JWT_COOKIE_SECURE": False,
     "JWT_COOKIE_CSRF_PROTECT": True,
     "JWT_COOKIE_SAMESITE": "Lax"
 })
@@ -56,7 +63,7 @@ app.config.update({
 jwt = JWTManager(app)
 swagger = Swagger(app, template=swagger_template)
 app.register_blueprint(campaign_bp, url_prefix="/api/campaigns")
-app.register_blueprint(auth_bp, url_prefix="/auth")
+app.register_blueprint(auth_bp, url_prefix="/api/auth")
 
 
 @app.after_request

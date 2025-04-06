@@ -59,7 +59,6 @@ class UserService:
             
     @staticmethod
     def generate_auth_tokens(user_id):
-        """Génère à la fois access et refresh tokens"""
         return {
             "access_token": create_access_token(identity=str(user_id)),
             "refresh_token": create_refresh_token(identity=str(user_id))
@@ -67,7 +66,7 @@ class UserService:
 
     @staticmethod
     def refresh_tokens(refresh_token):
-        """Rafraîchit les tokens à partir d'un refresh token valide"""
+        
         try:
             current_user_id = get_jwt_identity()
             return {

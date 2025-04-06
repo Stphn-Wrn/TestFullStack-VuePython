@@ -171,3 +171,19 @@ class TestCampaignServiceUnit:
         
         with pytest.raises(ValueError, match="Campaign not found or access denied"):
             CampaignService.delete_campaign(campaign_id)
+            
+    @patch("src.campaigns.services.db_session")
+    def test_get_user_campaigns_success(self, mock_db_session):
+        mock_session = MagicMock()
+        mock_db_session.return_value = mock_session
+
+        mock_campaigns = [MagicMock(), MagicMock()]
+        mock_session.query.return_value.filter.return_value.all.return_value = mock_campaigns
+
+        user_id = 1
+        result = CampaignService.get_user_campaigns(user_id)
+
+        mock_session.query.assert_called_once_with(Campaign)
+        mock_session.query.return_value.filter.assert_called_once()
+        mock_session.query.return_value.filter.return_value.all.assert_called_once()
+        assert result == mock_campaigns

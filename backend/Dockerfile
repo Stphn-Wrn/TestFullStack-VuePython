@@ -16,6 +16,7 @@ RUN apt -y update \
     && pip install flask-cors \
     && pip install Flask-Caching \
     && pip install flask-wtf flasgger\
+    && pip install python-dateutil \
     && pip install pytest pytest-mock factory_boy \
     && pip install flask-jwt-extended \
     && apt install -y libpq-dev gcc \

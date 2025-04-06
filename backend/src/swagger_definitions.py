@@ -254,6 +254,30 @@ swagger_template = {
                 }
             }
         },
+        "/api/campaigns/all": {
+            "get": {
+                "tags": ["Campaigns"],
+                "summary": "Get all campaigns for the current user",
+                "description": "Returns a list of campaigns belonging to the authenticated user",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                "200": {
+                    "description": "A list of user campaigns",
+                    "schema": {
+                    "type": "object",
+                    "properties": {
+                        "data": {
+                        "type": "array",
+                        "items": { "$ref": "#/definitions/Campaign" }
+                        }
+                    }
+                    }
+                },
+                "401": { "description": "Unauthorized - Invalid or missing JWT" },
+                "500": { "description": "Internal server error" }
+                }
+            }
+            },
         "/auth/register": {
             "post": {
                 "tags": ["Authentication"],
