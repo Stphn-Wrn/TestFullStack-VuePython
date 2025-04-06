@@ -26,7 +26,7 @@ from flask_cors import CORS
 import os, logging
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins=os.getenv("VITE_API_URL", "http://localhost:5173",), methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+CORS(app, supports_credentials=True, origins=os.getenv("VITE_API_URL", "http://127.0.0.1:5173",), methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
     expose_headers=["Set-Cookie"])
 
@@ -66,7 +66,6 @@ def after_request_handler(response):
     return response
 
 def handle_response(response):
-    """Centralized response handler for CORS and JWT refresh"""
     try:
         if not response.is_json or request.method == 'OPTIONS':
             return response
@@ -85,9 +84,7 @@ def handle_response(response):
         app.logger.error(f"Error in response handler: {str(e)}")
         return response
     
-@app.after_request
 def refresh_expiring_jwts(response, jwt_data=None):
-    """Refresh JWT tokens if they're about to expire"""
     try:
         if not jwt_data:
             return response
