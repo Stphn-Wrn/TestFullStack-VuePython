@@ -33,8 +33,8 @@ CORS(app,
     "http://127.0.0.1:5173"
   ],
   methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-CSRF-TOKEN"],
-  expose_headers=["Set-Cookie"]
+  allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-CSRF-TOKEN", "COOKIES"],
+  expose_headers=["Set-Cookie"],
 )
 
 app.config['SWAGGER'] = {
@@ -57,7 +57,7 @@ app.config.update({
     "JWT_TOKEN_LOCATION": ["cookies"],
     "JWT_COOKIE_SECURE": False,
     "JWT_COOKIE_CSRF_PROTECT": True,
-    "JWT_COOKIE_SAMESITE": "None"
+    "JWT_COOKIE_SAMESITE": "Lax"
 })
 
 jwt = JWTManager(app)

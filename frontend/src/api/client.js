@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const apiClient = axios.create({
   baseURL: 'http://localhost:8000/api',
-  withCredentials: true,
+  withCredentials: true, 
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -20,14 +20,17 @@ async function sha256(text) {
 const shouldHashPassword = (url) =>
   ['/auth/login', '/auth/register'].some(endpoint => url.includes(endpoint));
 
-const getToken = () => {
-  return getCookie('access_token_cookie'); 
-};
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
 
 apiClient.interceptors.request.use(async (config) => {
   const method = config.method?.toLowerCase();
 
-  if (['post', 'put', 'delete', 'options'].includes(method)) {
+  if (['post', 'put', 'delete', 'patch'].includes(method)) {
     const csrfToken = getCookie('csrf_access_token');
     if (csrfToken) {
       config.headers['X-CSRF-TOKEN'] = csrfToken;
@@ -43,19 +46,12 @@ apiClient.interceptors.request.use(async (config) => {
     }
   }
 
-  const token = getToken();
-  if (token && config.url.includes('/api/campaigns')) {
-    config.headers['Authorization'] = `Bearer ${token}`;
+  const accessToken = getCookie('access_token_cookie');
+  if (accessToken) {
+    config.headers['Authorization'] = `Bearer ${accessToken}`;
   }
 
   return config;
 });
-
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length >= 2) return parts.pop().split(';')[0];
-  return null;
-}
 
 export default apiClient;

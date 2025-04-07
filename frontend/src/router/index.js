@@ -4,21 +4,14 @@ import { useAuthStore } from '../stores/authStore'
 const routes = [
   {
     path: '/',
-    name: 'home',
+    name: 'Login',
     component: () => import('../pages/AuthPage.vue'),
-    meta: { requiresGuest: true }
-  },
-  {
-    path: '/auth',
-    name: 'Auth',
-    component: () => import('../pages/AuthPage.vue'),
-    meta: { requiresGuest: true }
   },
   {
     path: '/dashboard',
     name: 'Dashboard',
     component: () => import('../pages/DashboardPage.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true } 
   }
 ]
 
@@ -32,19 +25,12 @@ router.beforeEach(async (to) => {
 
   if (to.meta.requiresAuth) {
     const isLoggedIn = auth.user || await auth.fetchUser()
-
     if (!isLoggedIn) {
-      return {
-        path: '/auth',
-        query: { redirectTo: to.fullPath }
-      }
+      return '/'
     }
   }
 
-  if (to.meta.requiresGuest && auth.user) {
-    return '/dashboard'
-  }
+  return true
 })
-;
 
-export default router;
+export default router

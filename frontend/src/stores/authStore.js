@@ -11,45 +11,56 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     async login(credentials) {
-      this.isLoading = true
-      this.error = null
-  
+      this.isLoading = true;
+      this.error = null;
+    
       try {
-        await apiClient.post('/auth/login', credentials)
-        const me = await apiClient.get('/auth/me')
-        this.user = me.data.user
-        return true
+        await apiClient.post('/auth/login', credentials);
+        return true;
       } catch (error) {
-        const raw = error.response?.data?.error || "Login failed"
-        
-        if (
-          raw.includes('Email not found') ||
-          raw.includes('Incorrect password')
-        ) {
-          this.error = "Invalid email or password"
+        const message = error.response?.data?.msg || error.response?.data?.error || "Login failed";
+    
+        if (message.includes('Email not found') || message.includes('Incorrect password')) {
+          this.error = "Invalid email or password.";
         } else {
-          this.error = "An error occurred. Please try again."
+          this.error = message;
         }
-  
-        return false
+    
+        return false;
       } finally {
-        this.isLoading = false
+        this.isLoading = false;
       }
     },
+    
 
     async fetchUser() {
+      this.isLoading = true;
+      this.error = null;
+    
       try {
-        const { data } = await apiClient.get('/auth/me')
-        this.user = data.user
-        return true
+        const { data } = await apiClient.get('/auth/me');
+        this.user = data.user;
+        return true;
       } catch (error) {
-        this.user = null
-        if (error.response?.status === 401) {
-          console.warn('Utilisateur non connecté')
+        this.user = null;
+    
+        const message = error.response?.data?.msg || error.response?.data?.error || "Fetch user failed";
+    
+        if (error.response?.status === 401 || error.response?.status === 422) {
+          this.error = message;
+          console.warn('[fetchUser] Erreur authentification:', message);
+        } else {
+          this.error = "An unexpected error occurred.";
+          console.error('[fetchUser] Erreur inattendue:', message);
         }
-        return false
+    
+        return false;
+      } finally {
+        this.isLoading = false;
       }
     },
+    
+    
     async register(userData) {
       this.isLoading = true
       this.error = null
