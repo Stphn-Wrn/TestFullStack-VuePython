@@ -75,9 +75,11 @@ def login():
 @auth_bp.route('/me', methods=['GET'])
 @jwt_required()
 def get_current_user():
+    
     try:
+
         current_user_id = get_jwt_identity()
-        print(f"JWT Identity: {current_user_id}, Type: {type(current_user_id)}")
+        print("[JWT] identity récupérée (auth route) :", get_jwt_identity())
 
         user_id = int(current_user_id) if isinstance(current_user_id, (str, int)) else None
         if user_id is None:

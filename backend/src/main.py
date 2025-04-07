@@ -51,13 +51,13 @@ app.config['SWAGGER'] = {
 }
 
 app.config.update({
-    "JWT_SECRET_KEY": os.getenv("JWT_SECRET_KEY", "your_super_secret_here"),
+    "JWT_SECRET_KEY": os.getenv("JWT_SECRET_KEY", "stephen/test/secretKey"),
     "JWT_ACCESS_TOKEN_EXPIRES": timedelta(minutes=15),
     "JWT_REFRESH_TOKEN_EXPIRES": timedelta(days=30),
-    "JWT_TOKEN_LOCATION": ["headers", "cookies"],
+    "JWT_TOKEN_LOCATION": ["cookies"],
     "JWT_COOKIE_SECURE": False,
     "JWT_COOKIE_CSRF_PROTECT": True,
-    "JWT_COOKIE_SAMESITE": "Lax"
+    "JWT_COOKIE_SAMESITE": "None"
 })
 
 jwt = JWTManager(app)

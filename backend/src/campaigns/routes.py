@@ -59,6 +59,7 @@ def get_campaign(campaign_id):
 @jwt_required()
 def get_all_campaigns():
     try:
+
         current_user_id = get_jwt_identity()
         campaigns = CampaignService.get_user_campaigns(current_user_id)
         
