@@ -15,7 +15,9 @@ export const useAuthStore = defineStore('auth', {
       this.error = null;
     
       try {
-        await apiClient.post('/auth/login', credentials);
+        const test = await apiClient.post('/auth/login', credentials);
+        console.log(test)
+        this.justLoggedIn = true; 
         return true;
       } catch (error) {
         const message = error.response?.data?.msg || error.response?.data?.error || "Login failed";
@@ -39,21 +41,25 @@ export const useAuthStore = defineStore('auth', {
     
       try {
         const { data } = await apiClient.get('/auth/me');
-        this.user = data.user;
+        this.user = data;
+        this.justLoggedIn = false; 
+        console.log("[authStore] user enregistré :", this.user);
+
         return true;
       } catch (error) {
         this.user = null;
+        
+        const message = error.response?.data?.msg 
+          || error.response?.data?.error 
+          || "Échec de la vérification de l'utilisateur";
     
-        const message = error.response?.data?.msg || error.response?.data?.error || "Fetch user failed";
-    
-        if (error.response?.status === 401 || error.response?.status === 422) {
-          this.error = message;
-          console.warn('[fetchUser] Erreur authentification:', message);
+        if (error.response?.status === 401) {
+          console.warn('Non autorisé');
         } else {
-          this.error = "An unexpected error occurred.";
-          console.error('[fetchUser] Erreur inattendue:', message);
+          console.error('Erreur fetchUser:', message);
+          this.error = message;
         }
-    
+        
         return false;
       } finally {
         this.isLoading = false;

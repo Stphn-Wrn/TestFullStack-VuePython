@@ -72,15 +72,14 @@ def login():
     except ValueError as e:
         return jsonify({"error": str(e)}), 401
 
-@auth_bp.route('/me', methods=['GET'])
+@auth_bp.route('/me', methods=['GET', 'OPTIONS'])
 @jwt_required()
 def get_current_user():
-    
+    if request.method == 'OPTIONS':
+        return '', 200
     try:
 
         current_user_id = get_jwt_identity()
-        print("[JWT] identity récupérée (auth route) :", get_jwt_identity())
-
         user_id = int(current_user_id) if isinstance(current_user_id, (str, int)) else None
         if user_id is None:
             return jsonify({"error": "Invalid user ID"}), 400

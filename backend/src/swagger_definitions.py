@@ -1,170 +1,301 @@
 swagger_template = {
     "swagger": "2.0",
     "info": {
-        "title": "Campaign API",
-        "description": "API for managing marketing campaigns and user authentication",
+        "title": "Campaign Management API",
+        "description": "API for managing campaigns with JWT cookie-based authentication",
         "version": "1.0.0",
         "contact": {
             "email": "contact@example.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
         }
     },
-    "basePath": "/",  
+    "host": "localhost:5000",  # Ajustez selon votre configuration
+    "basePath": "/",
     "schemes": ["http", "https"],
+    "consumes": ["application/json"],
+    "produces": ["application/json"],
     "securityDefinitions": {
-        "BearerAuth": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header",
-            "description": "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'"
-        },
-        "CSRFToken": {
+        "JWT": {
             "type": "apiKey",
             "name": "X-CSRF-TOKEN",
             "in": "header",
-            "description": "CSRF Token for protection against cross-site request forgery"
+            "description": "CSRF protection for JWT cookies. Include the CSRF token in headers for state-changing requests."
         }
     },
-    "definitions": {
-        "Campaign": {
-            "type": "object",
-            "required": ["name", "start_date", "end_date", "owner_id"],
-            "properties": {
-                "id": {"type": "integer", "readOnly": True},
-                "name": {"type": "string", "minLength": 3, "maxLength": 100},
-                "description": {"type": "string"},
-                "start_date": {"type": "string", "format": "date-time"},
-                "end_date": {"type": "string", "format": "date-time"},
-                "budget": {"type": "integer", "minimum": 0},
-                "status": {"type": "boolean"},
-                "created_at": {"type": "string", "format": "date-time", "readOnly": True},
-                "owner_id": {"type": "integer"},
-                "owner": {"$ref": "#/definitions/User"}
-            }
+    "security": [{"JWT": []}],
+    "tags": [
+        {
+            "name": "Authentication",
+            "description": "User registration, login, and token management"
         },
-        "CampaignCreate": {
-            "type": "object",
-            "required": ["name", "start_date", "end_date"],
-            "properties": {
-                "name": {"type": "string", "minLength": 3, "maxLength": 100},
-                "description": {"type": "string"},
-                "start_date": {"type": "string", "format": "date-time"},
-                "end_date": {"type": "string", "format": "date-time"},
-                "budget": {"type": "integer", "minimum": 0},
-                "status": {"type": "boolean"}
-            }
-        },
-        "CampaignUpdate": {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string", "minLength": 3, "maxLength": 100},
-                "description": {"type": "string"},
-                "start_date": {"type": "string", "format": "date-time"},
-                "end_date": {"type": "string", "format": "date-time"},
-                "budget": {"type": "integer", "minimum": 0},
-                "status": {"type": "boolean"}
-            }
-        },
-        "User": {
-            "type": "object",
-            "properties": {
-                "id": {"type": "integer"},
-                "username": {"type": "string"},
-                "email": {"type": "string"},
-                "created_at": {"type": "string", "format": "date-time"}
-            }
-        },
-        "LoginRequest": {
-            "type": "object",
-            "required": ["email", "password"],
-            "properties": {
-                "email": {"type": "string"},
-                "password": {"type": "string"}
-            }
-        },
-        "RegisterRequest": {
-            "type": "object",
-            "required": ["username", "email", "password"],
-            "properties": {
-                "username": {"type": "string"},
-                "email": {"type": "string"},
-                "password": {"type": "string"}
-            }
-        },
-        "ErrorResponse": {
-            "type": "object",
-            "properties": {
-                "message": {"type": "string"},
-                "errors": {"type": "object"}
-            }
-        },
-        "AuthResponse": {
-            "type": "object",
-            "properties": {
-                "message": {"type": "string"},
-                "user_id": {"type": "integer"},
-                "user": {"$ref": "#/definitions/User"},
-                "access_token": {"type": "string"},
-                "refresh_token": {"type": "string"}
-            }
-        },
-        "TokenRefreshResponse": {
-            "type": "object",
-            "properties": {
-                "message": {"type": "string"},
-                "access_token": {"type": "string"}
-            }
-        },
-        "SuccessResponse": {
-            "type": "object",
-            "properties": {
-                "message": {"type": "string"},
-                "data": {"type": "object"}
-            }
+        {
+            "name": "Campaigns",
+            "description": "Operations related to campaign management"
         }
-    },
+    ],
     "paths": {
-        "/api/campaigns": {
-            "get": {
-                "tags": ["Campaigns"],
-                "summary": "Get all campaigns",
-                "description": "Returns a list of all campaigns for the authenticated user",
-                "security": [{"BearerAuth": []}],
-                "responses": {
-                    "200": {
-                        "description": "A list of campaigns",
+        "/api/auth/register": {
+            "post": {
+                "tags": ["Authentication"],
+                "summary": "Register a new user",
+                "description": "Creates a new user account and returns authentication cookies",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": True,
                         "schema": {
-                            "type": "array",
-                            "items": {"$ref": "#/definitions/Campaign"}
+                            "type": "object",
+                            "properties": {
+                                "username": {"type": "string", "example": "johndoe"},
+                                "email": {"type": "string", "format": "email", "example": "user@example.com"},
+                                "password": {"type": "string", "format": "password", "example": "securePassword123"}
+                            },
+                            "required": ["username", "email", "password"]
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "User created successfully",
+                        "headers": {
+                            "Set-Cookie": {
+                                "type": "string",
+                                "description": "Sets HTTP-only JWT cookies (access_token_cookie and refresh_token_cookie)"
+                            }
+                        },
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {"type": "string", "example": "User created successfully"},
+                                "user_id": {"type": "integer", "example": 1}
+                            }
                         }
                     },
-                    "401": {"description": "Unauthorized - Invalid or missing JWT"},
-                    "500": {"description": "Internal server error"}
+                    "400": {
+                        "description": "Invalid input data",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {"type": "string", "example": "Email already registered"}
+                            }
+                        }
+                    }
                 }
-            },
+            }
+        },
+        "/api/auth/login": {
+            "post": {
+                "tags": ["Authentication"],
+                "summary": "Authenticate user",
+                "description": "Logs in a user and returns authentication cookies",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": True,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "email": {"type": "string", "format": "email", "example": "user@example.com"},
+                                "password": {"type": "string", "format": "password", "example": "securePassword123"}
+                            },
+                            "required": ["email", "password"]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "headers": {
+                            "Set-Cookie": {
+                                "type": "string",
+                                "description": "Sets HTTP-only JWT cookies (access_token_cookie and refresh_token_cookie)"
+                            }
+                        },
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {"type": "string", "example": "Login successful"},
+                                "user": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {"type": "integer"},
+                                        "username": {"type": "string"},
+                                        "email": {"type": "string"}
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {"type": "string", "example": "Invalid email or password"}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/me": {
+            "get": {
+                "tags": ["Authentication"],
+                "summary": "Get current user info",
+                "description": "Returns information about the currently authenticated user",
+                "security": [{"JWT": []}],
+                "responses": {
+                    "200": {
+                        "description": "User information",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "integer"},
+                                "username": {"type": "string"},
+                                "email": {"type": "string"}
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {"type": "string", "example": "Missing authorization token"}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/refresh": {
+            "post": {
+                "tags": ["Authentication"],
+                "summary": "Refresh access token",
+                "description": "Generates a new access token using the refresh token",
+                "security": [{"JWT": []}],
+                "responses": {
+                    "200": {
+                        "description": "Token refreshed successfully",
+                        "headers": {
+                            "Set-Cookie": {
+                                "type": "string",
+                                "description": "Sets new HTTP-only access_token_cookie"
+                            }
+                        },
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {"type": "string", "example": "Token refreshed successfully"}
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired refresh token",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {"type": "string", "example": "Token refresh failed"}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/logout": {
+            "post": {
+                "tags": ["Authentication"],
+                "summary": "Logout user",
+                "description": "Invalidates authentication cookies",
+                "security": [{"JWT": []}],
+                "responses": {
+                    "200": {
+                        "description": "Logout successful",
+                        "headers": {
+                            "Set-Cookie": {
+                                "type": "string",
+                                "description": "Clears JWT cookies"
+                            }
+                        },
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {"type": "string", "example": "Logout successful"}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/campaigns/": {
             "post": {
                 "tags": ["Campaigns"],
                 "summary": "Create a new campaign",
-                "description": "Creates a new campaign with the provided data",
-                "security": [{"BearerAuth": []}, {"CSRFToken": []}],
+                "description": "Creates a new campaign for the authenticated user",
+                "security": [{"JWT": []}],
                 "parameters": [
                     {
-                        "name": "body",
                         "in": "body",
+                        "name": "body",
                         "required": True,
-                        "schema": {"$ref": "#/definitions/CampaignCreate"}
+                        "schema": {
+                            "$ref": "#/definitions/Campaign"
+                        }
                     }
                 ],
                 "responses": {
                     "201": {
                         "description": "Campaign created successfully",
-                        "schema": {"$ref": "#/definitions/SuccessResponse"}
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {"$ref": "#/definitions/Campaign"},
+                                "message": {"type": "string", "example": "Campaign created successfully"}
+                            }
+                        }
                     },
                     "400": {
-                        "description": "Validation error",
-                        "schema": {"$ref": "#/definitions/ErrorResponse"}
+                        "description": "Invalid input data",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {"type": "string"}
+                            }
+                        }
                     },
-                    "401": {"description": "Unauthorized - Invalid or missing JWT"},
-                    "500": {"description": "Internal server error"}
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/api/campaigns/all": {
+            "get": {
+                "tags": ["Campaigns"],
+                "summary": "Get all user campaigns",
+                "description": "Returns all campaigns for the authenticated user",
+                "security": [{"JWT": []}],
+                "responses": {
+                    "200": {
+                        "description": "List of campaigns",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "array",
+                                    "items": {"$ref": "#/definitions/Campaign"}
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
                 }
             }
         },
@@ -173,228 +304,142 @@ swagger_template = {
                 "tags": ["Campaigns"],
                 "summary": "Get a specific campaign",
                 "description": "Returns details for a specific campaign",
-                "security": [{"BearerAuth": []}],
+                "security": [{"JWT": []}],
                 "parameters": [
                     {
                         "name": "campaign_id",
                         "in": "path",
-                        "description": "ID of the campaign to retrieve",
                         "required": True,
-                        "type": "integer"
+                        "type": "integer",
+                        "description": "ID of the campaign to retrieve"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Campaign details",
-                        "schema": {"$ref": "#/definitions/Campaign"}
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {"$ref": "#/definitions/Campaign"}
+                            }
+                        }
                     },
-                    "401": {"description": "Unauthorized - Invalid or missing JWT"},
-                    "404": {"description": "Campaign not found"},
-                    "500": {"description": "Internal server error"}
+                    "404": {
+                        "description": "Campaign not found",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {"type": "string", "example": "Campaign not found"}
+                            }
+                        }
+                    }
                 }
             },
             "put": {
                 "tags": ["Campaigns"],
                 "summary": "Update a campaign",
                 "description": "Updates an existing campaign",
-                "security": [{"BearerAuth": []}, {"CSRFToken": []}],
+                "security": [{"JWT": []}],
                 "parameters": [
                     {
                         "name": "campaign_id",
                         "in": "path",
-                        "description": "ID of the campaign to update",
                         "required": True,
-                        "type": "integer"
+                        "type": "integer",
+                        "description": "ID of the campaign to update"
                     },
                     {
-                        "name": "body",
                         "in": "body",
+                        "name": "body",
                         "required": True,
-                        "schema": {"$ref": "#/definitions/CampaignUpdate"}
+                        "schema": {
+                            "$ref": "#/definitions/CampaignUpdate"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Campaign updated successfully",
-                        "schema": {"$ref": "#/definitions/SuccessResponse"}
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {"$ref": "#/definitions/Campaign"},
+                                "message": {"type": "string", "example": "Campaign updated successfully"}
+                            }
+                        }
                     },
                     "400": {
-                        "description": "Validation error",
-                        "schema": {"$ref": "#/definitions/ErrorResponse"}
-                    },
-                    "401": {"description": "Unauthorized - Invalid or missing JWT"},
-                    "403": {"description": "Forbidden - User doesn't own the campaign"},
-                    "404": {"description": "Campaign not found"},
-                    "500": {"description": "Internal server error"}
+                        "description": "Invalid input data",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {"type": "string"}
+                            }
+                        }
+                    }
                 }
             },
             "delete": {
                 "tags": ["Campaigns"],
                 "summary": "Delete a campaign",
                 "description": "Deletes an existing campaign",
-                "security": [{"BearerAuth": []}, {"CSRFToken": []}],
+                "security": [{"JWT": []}],
                 "parameters": [
                     {
                         "name": "campaign_id",
                         "in": "path",
-                        "description": "ID of the campaign to delete",
                         "required": True,
-                        "type": "integer"
+                        "type": "integer",
+                        "description": "ID of the campaign to delete"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Campaign deleted successfully",
-                        "schema": {"$ref": "#/definitions/SuccessResponse"}
-                    },
-                    "401": {"description": "Unauthorized - Invalid or missing JWT"},
-                    "403": {"description": "Forbidden - User doesn't own the campaign"},
-                    "404": {"description": "Campaign not found"},
-                    "500": {"description": "Internal server error"}
-                }
-            }
-        },
-        "/api/campaigns/all": {
-            "get": {
-                "tags": ["Campaigns"],
-                "summary": "Get all campaigns for the current user",
-                "description": "Returns a list of campaigns belonging to the authenticated user",
-                "security": [{"BearerAuth": []}],
-                "responses": {
-                "200": {
-                    "description": "A list of user campaigns",
-                    "schema": {
-                    "type": "object",
-                    "properties": {
-                        "data": {
-                        "type": "array",
-                        "items": { "$ref": "#/definitions/Campaign" }
-                        }
-                    }
-                    }
-                },
-                "401": { "description": "Unauthorized - Invalid or missing JWT" },
-                "500": { "description": "Internal server error" }
-                }
-            }
-            },
-        "/auth/register": {
-            "post": {
-                "tags": ["Authentication"],
-                "summary": "Register a new user",
-                "description": "Creates a new user account",
-                "parameters": [
-                    {
-                        "name": "body",
-                        "in": "body",
-                        "required": True,
-                        "schema": {"$ref": "#/definitions/RegisterRequest"}
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "User created successfully",
-                        "schema": {"$ref": "#/definitions/AuthResponse"}
-                    },
-                    "400": {
-                        "description": "Validation error",
-                        "schema": {"$ref": "#/definitions/ErrorResponse"}
-                    },
-                    "500": {"description": "Registration failed"}
-                }
-            }
-        },
-        "/auth/login": {
-            "post": {
-                "tags": ["Authentication"],
-                "summary": "User login",
-                "description": "Authenticates a user and returns a JWT token",
-                "parameters": [
-                    {
-                        "name": "body",
-                        "in": "body",
-                        "required": True,
-                        "schema": {"$ref": "#/definitions/LoginRequest"}
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Login successful",
-                        "schema": {"$ref": "#/definitions/AuthResponse"}
-                    },
-                    "400": {
-                        "description": "Email and password required",
-                        "schema": {"$ref": "#/definitions/ErrorResponse"}
-                    },
-                    "401": {
-                        "description": "Invalid credentials",
-                        "schema": {"$ref": "#/definitions/ErrorResponse"}
-                    },
-                    "500": {"description": "Login failed"}
-                }
-            }
-        },
-        "/auth/me": {
-            "get": {
-                "tags": ["Authentication"],
-                "summary": "Get current user info",
-                "description": "Returns information about the currently authenticated user",
-                "security": [{"BearerAuth": []}],
-                "responses": {
-                    "200": {
-                        "description": "User details",
-                        "schema": {"$ref": "#/definitions/User"}
-                    },
-                    "400": {
-                        "description": "Invalid user ID",
-                        "schema": {"$ref": "#/definitions/ErrorResponse"}
-                    },
-                    "401": {"description": "Unauthorized - Invalid or missing JWT"},
-                    "404": {"description": "User not found"},
-                    "500": {"description": "Server error"}
-                }
-            }
-        },
-        "/auth/refresh": {
-            "post": {
-                "tags": ["Authentication"],
-                "summary": "Refresh access token",
-                "description": "Generates a new access token using the refresh token",
-                "security": [{"BearerAuth": []}],
-                "responses": {
-                    "200": {
-                        "description": "Token refreshed successfully",
-                        "schema": {"$ref": "#/definitions/TokenRefreshResponse"}
-                    },
-                    "401": {
-                        "description": "Invalid or expired refresh token",
-                        "schema": {"$ref": "#/definitions/ErrorResponse"}
-                    },
-                    "500": {"description": "Token refresh failed"}
-                }
-            }
-        },
-        "/auth/logout": {
-            "post": {
-                "tags": ["Authentication"],
-                "summary": "User logout",
-                "description": "Invalidates the current session tokens",
-                "security": [{"BearerAuth": []}],
-                "responses": {
-                    "200": {
-                        "description": "Logout successful",
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "message": {"type": "string"}
+                                "message": {"type": "string", "example": "Campaign deleted successfully"}
                             }
                         }
                     },
-                    "401": {"description": "Unauthorized - Invalid or missing JWT"},
-                    "500": {"description": "Logout failed"}
+                    "404": {
+                        "description": "Campaign not found",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {"type": "string", "example": "Campaign not found"}
+                            }
+                        }
+                    }
                 }
             }
         }
     },
-    "security": [{"BearerAuth": []}]
+    "definitions": {
+        "Campaign": {
+            "type": "object",
+            "properties": {
+                "id": {"type": "integer", "example": 1},
+                "name": {"type": "string", "example": "Summer Sale"},
+                "description": {"type": "string", "example": "Promotion for summer products"},
+                "start_date": {"type": "string", "format": "date-time"},
+                "end_date": {"type": "string", "format": "date-time"},
+                "budget": {"type": "number", "format": "float", "example": 1000.0},
+                "status": {"type": "string", "example": "active"},
+                "owner_id": {"type": "integer", "example": 1}
+            }
+        },
+        "CampaignUpdate": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "example": "Summer Sale"},
+                "description": {"type": "string", "example": "Promotion for summer products"},
+                "start_date": {"type": "string", "format": "date-time"},
+                "end_date": {"type": "string", "format": "date-time"},
+                "budget": {"type": "number", "format": "float", "example": 1000.0},
+                "status": {"type": "string", "example": "active"}
+            }
+        }
+    }
 }

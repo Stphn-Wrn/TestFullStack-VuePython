@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: "http://localhost:8000/api",
   withCredentials: true, 
   headers: {
     'Content-Type': 'application/json',
@@ -28,9 +28,13 @@ function getCookie(name) {
 }
 
 apiClient.interceptors.request.use(async (config) => {
+  console.log('Cookies envoyés :', document.cookie); // Vérifie dans la console
+
+  try {
+
   const method = config.method?.toLowerCase();
 
-  if (['post', 'put', 'delete', 'patch'].includes(method)) {
+  if (['get', 'post', 'put', 'delete', 'patch'].includes(method)) {
     const csrfToken = getCookie('csrf_access_token');
     if (csrfToken) {
       config.headers['X-CSRF-TOKEN'] = csrfToken;
@@ -38,20 +42,18 @@ apiClient.interceptors.request.use(async (config) => {
   }
 
   if (method === 'post' && config.data && shouldHashPassword(config.url)) {
-    if (config.data.password) {
-      config.data.password = await sha256(config.data.password);
-    }
-    if (config.data.confirmPassword) {
-      config.data.confirmPassword = await sha256(config.data.confirmPassword);
+    for (const key of ['password', 'confirmPassword']) {
+      if (config.data[key]) {
+        config.data[key] = await sha256(config.data[key]);
+      }
     }
   }
 
-  const accessToken = getCookie('access_token_cookie');
-  if (accessToken) {
-    config.headers['Authorization'] = `Bearer ${accessToken}`;
+return config;
+  } catch (error) {
+    console.error("Erreur dans l'intercepteur de requête :", error);
+    return Promise.reject(error);
   }
-
-  return config;
 });
 
 export default apiClient;

@@ -48,14 +48,8 @@ export default defineConfig({
     ],
   },
   server: {
-    proxy: {
-      '/api/auth': {  
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api\/auth/, '/auth') 
-      }
-    }
+    host: 'localhost',
+    port: 3000,         
   },
   css: {
     preprocessorOptions: {
