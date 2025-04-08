@@ -43,7 +43,6 @@ export const useAuthStore = defineStore('auth', {
         const { data } = await apiClient.get('/auth/me');
         this.user = data;
         this.justLoggedIn = false; 
-        console.log("[authStore] user enregistré :", this.user);
 
         return true;
       } catch (error) {
@@ -100,7 +99,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         await apiClient.post('/auth/logout')
       } catch (error) {
-        console.warn('[logout] Échec côté serveur :', error.response?.data || error.message)
+        console.warn(error.response?.data || error.message)
       } finally {
         this.user = null
         this.isLoading = false

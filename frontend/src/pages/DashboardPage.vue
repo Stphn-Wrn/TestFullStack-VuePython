@@ -218,7 +218,7 @@ const deleteCampaign = async (index) => {
 
 const handleLogout = async () => {
   await authStore.logout();
-  router.push('/auth');
+  router.push('/');
 };
 </script>
 
