@@ -15,10 +15,13 @@ export const useAuthStore = defineStore('auth', {
       this.error = null;
     
       try {
-        const test = await apiClient.post('/auth/login', credentials);
-        console.log(test)
-        this.justLoggedIn = true; 
-        return true;
+        let user = await apiClient.post('/auth/login', credentials);
+        if(user) {
+          await this.fetchUser();
+          this.justLoggedIn = true;
+          return true;
+        }
+        return false;
       } catch (error) {
         const message = error.response?.data?.msg || error.response?.data?.error || "Login failed";
     
@@ -73,7 +76,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         await apiClient.post('/auth/register', userData)
         const me = await apiClient.get('/auth/me')
-        this.user = me.data.user
+        this.user = me.data
         return true
       } catch (error) {
         const raw = error.response?.data?.error || "Registration failed"
