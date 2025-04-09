@@ -1,12 +1,12 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: "http://localhost:8000/api",
-  withCredentials: true, 
+  baseURL: 'http://localhost:8000/api',
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  }
+    Accept: 'application/json',
+  },
 });
 
 async function sha256(text) {
@@ -14,11 +14,11 @@ async function sha256(text) {
   const data = encoder.encode(text);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 const shouldHashPassword = (url) =>
-  ['/auth/login', '/auth/register'].some(endpoint => url.includes(endpoint));
+  ['/auth/login', '/auth/register'].some((endpoint) => url.includes(endpoint));
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -28,30 +28,26 @@ function getCookie(name) {
 }
 
 apiClient.interceptors.request.use(async (config) => {
-  console.log('Cookies envoyés :', document.cookie); // Vérifie dans la console
-
   try {
+    const method = config.method?.toLowerCase();
 
-  const method = config.method?.toLowerCase();
-
-  if (['get', 'post', 'put', 'delete', 'patch'].includes(method)) {
-    const csrfToken = getCookie('csrf_access_token');
-    if (csrfToken) {
-      config.headers['X-CSRF-TOKEN'] = csrfToken;
-    }
-  }
-
-  if (method === 'post' && config.data && shouldHashPassword(config.url)) {
-    for (const key of ['password', 'confirmPassword']) {
-      if (config.data[key]) {
-        config.data[key] = await sha256(config.data[key]);
+    if (['get', 'post', 'put', 'delete', 'patch'].includes(method)) {
+      const csrfToken = getCookie('csrf_access_token');
+      if (csrfToken) {
+        config.headers['X-CSRF-TOKEN'] = csrfToken;
       }
     }
-  }
 
-return config;
+    if (method === 'post' && config.data && shouldHashPassword(config.url)) {
+      for (const key of ['password', 'confirmPassword']) {
+        if (config.data[key]) {
+          config.data[key] = await sha256(config.data[key]);
+        }
+      }
+    }
+
+    return config;
   } catch (error) {
-    console.error("Erreur dans l'intercepteur de requête :", error);
     return Promise.reject(error);
   }
 });

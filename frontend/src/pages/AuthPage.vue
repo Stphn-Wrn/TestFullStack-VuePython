@@ -2,13 +2,13 @@
   <v-container class="fill-height d-flex justify-center align-center">
     <v-card width="450" class="pa-4">
       <v-tabs v-model="tab" grow>
-        <v-tab value="login">Login</v-tab>
-        <v-tab value="register">Register</v-tab>
+        <v-tab value="login"> Login </v-tab>
+        <v-tab value="register"> Register </v-tab>
       </v-tabs>
 
       <v-window v-model="tab">
         <v-window-item value="login">
-          <v-form @submit.prevent="handleLogin" class="mt-4">
+          <v-form class="mt-4" @submit.prevent="handleLogin">
             <v-alert
               v-if="authStore.error"
               type="error"
@@ -25,8 +25,7 @@
               type="email"
               required
               outlined
-              :rules="[emailRules]"
-            ></v-text-field>
+            />
 
             <v-text-field
               v-model="loginForm.password"
@@ -37,7 +36,6 @@
               :append-inner-icon="showLoginPassword ? 'mdi-eye-off' : 'mdi-eye'"
               @click:append-inner="showLoginPassword = !showLoginPassword"
             />
-
 
             <v-btn
               type="submit"
@@ -54,7 +52,7 @@
         </v-window-item>
 
         <v-window-item value="register">
-          <v-form @submit.prevent="handleRegister" class="mt-4">
+          <v-form class="mt-4" @submit.prevent="handleRegister">
             <v-alert
               v-if="authStore.error"
               type="error"
@@ -70,7 +68,7 @@
               label="Username"
               required
               outlined
-            ></v-text-field>
+            />
 
             <v-text-field
               v-model="registerForm.email"
@@ -79,7 +77,7 @@
               required
               outlined
               :rules="[emailRules]"
-            ></v-text-field>
+            />
 
             <v-text-field
               v-model="registerForm.password"
@@ -88,10 +86,11 @@
               required
               outlined
               :rules="[passwordRules]"
-              :append-inner-icon="showRegisterPassword ? 'mdi-eye-off' : 'mdi-eye'"
+              :append-inner-icon="
+                showRegisterPassword ? 'mdi-eye-off' : 'mdi-eye'
+              "
               @click:append-inner="showRegisterPassword = !showRegisterPassword"
             />
-
 
             <v-text-field
               v-model="registerForm.confirmPassword"
@@ -100,7 +99,9 @@
               required
               outlined
               :rules="[passwordMatch]"
-              :append-inner-icon="showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
+              :append-inner-icon="
+                showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'
+              "
               @click:append-inner="showConfirmPassword = !showConfirmPassword"
             />
 
@@ -127,84 +128,86 @@ import { ref, computed, watch } from 'vue';
 import { useAuthStore } from '../stores/authStore';
 import { useRouter } from 'vue-router';
 
-const router = useRouter()
+const router = useRouter();
 const authStore = useAuthStore();
 
 const tab = ref('login');
 
-const showLoginPassword = ref(false)
-const showRegisterPassword = ref(false)
-const showConfirmPassword = ref(false)
-
+const showLoginPassword = ref(false);
+const showRegisterPassword = ref(false);
+const showConfirmPassword = ref(false);
 
 const loginForm = ref({
   email: '',
-  password: ''
+  password: '',
 });
 
 const registerForm = ref({
   username: '',
   email: '',
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
 });
 const emailRules = (value) => {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return regex.test(value) || 'Please enter a valid email address'
-}
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(value) || 'Please enter a valid email address';
+};
 
 const passwordRules = (value) =>
   value.length >= 8 || 'Password must be at least 8 characters long';
 
-const passwordMatch = computed(() =>
-  registerForm.value.password === registerForm.value.confirmPassword ||
-  'Passwords do not match'
+const passwordMatch = computed(
+  () =>
+    registerForm.value.password === registerForm.value.confirmPassword ||
+    'Passwords do not match',
 );
 
 const handleLogin = async () => {
   const success = await authStore.login({
     email: loginForm.value.email,
-    password: loginForm.value.password
-  })
+    password: loginForm.value.password,
+  });
 
   if (success) {
-   router.push('/dashboard');
-   console.log(success)
+    router.push('/dashboard');
+    console.log(success);
   }
-}
+};
 
 const handleRegister = async () => {
-  if (!registerForm.value.username || 
-      !registerForm.value.email || 
-      !registerForm.value.password) {
+  if (
+    !registerForm.value.username ||
+    !registerForm.value.email ||
+    !registerForm.value.password
+  ) {
     authStore.error = 'Please fill in all fields';
     return;
   }
 
   if (registerForm.value.password !== registerForm.value.confirmPassword) {
-    authStore.error = "Passwords do not match";
+    authStore.error = 'Passwords do not match';
     return;
   }
 
   const success = await authStore.register({
     username: registerForm.value.username,
     email: registerForm.value.email,
-    password: registerForm.value.password
+    password: registerForm.value.password,
   });
 
   if (success) {
     router.push('/dashboard');
   }
-}
+};
 
 function clearErrorOnChange(fields) {
-  fields.forEach(field => {
-    watch(field, () => authStore.error = null)
-  })
+  fields.forEach((field) => {
+    watch(field, () => (authStore.error = null));
+  });
 }
 watch(tab, () => {
-  authStore.clearErrors()
-})
+  authStore.clearErrors();
+});
 
 clearErrorOnChange([
   () => loginForm.value.email,
@@ -212,8 +215,8 @@ clearErrorOnChange([
   () => registerForm.value.username,
   () => registerForm.value.email,
   () => registerForm.value.password,
-  () => registerForm.value.confirmPassword
-])
+  () => registerForm.value.confirmPassword,
+]);
 </script>
 
 <style scoped>

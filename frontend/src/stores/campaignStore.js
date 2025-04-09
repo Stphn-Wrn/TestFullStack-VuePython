@@ -10,7 +10,6 @@ export const useCampaignStore = defineStore('campaign', {
   }),
 
   actions: {
-    
     async fetchCampaigns() {
       this.isLoading = true;
       this.error = null;
@@ -33,7 +32,11 @@ export const useCampaignStore = defineStore('campaign', {
       } catch (error) {
         console.error('Create campaign failed:', error);
         if (error.response) {
-          console.error('Server responded with:', error.response.status, error.response.data);
+          console.error(
+            'Server responded with:',
+            error.response.status,
+            error.response.data,
+          );
         }
         this.error = 'Failed to create campaign.';
       } finally {
@@ -45,8 +48,13 @@ export const useCampaignStore = defineStore('campaign', {
       this.isLoading = true;
       this.error = null;
       try {
-        const response = await apiClient.put(`/campaigns/${campaignId}`, campaignData);
-        const index = this.campaigns.findIndex(campaign => campaign.id === campaignId);
+        const response = await apiClient.put(
+          `/campaigns/${campaignId}`,
+          campaignData,
+        );
+        const index = this.campaigns.findIndex(
+          (campaign) => campaign.id === campaignId,
+        );
         if (index !== -1) {
           this.campaigns[index] = response.data.data; // Mise à jour de la campagne existante
         }
@@ -62,7 +70,9 @@ export const useCampaignStore = defineStore('campaign', {
       this.error = null;
       try {
         await apiClient.delete(`/campaigns/${campaignId}`);
-        this.campaigns = this.campaigns.filter(campaign => campaign.id !== campaignId); // Retirer la campagne supprimée de la liste
+        this.campaigns = this.campaigns.filter(
+          (campaign) => campaign.id !== campaignId,
+        ); // Retirer la campagne supprimée de la liste
       } catch (error) {
         this.error = 'Failed to delete campaign.';
       } finally {

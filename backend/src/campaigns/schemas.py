@@ -6,7 +6,6 @@ class SafeDateTime(fields.DateTime):
     def _deserialize(self, value, attr, data, **kwargs):
         if isinstance(value, datetime):
             return value
-        
         try:
             return parser.isoparse(value)
         except (ValueError, AttributeError, TypeError) as error:
