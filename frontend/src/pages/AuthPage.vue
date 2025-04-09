@@ -21,7 +21,7 @@
 
             <v-text-field
               v-model="loginForm.email"
-              label="Email"
+              label="Identitiant"
               type="email"
               required
               outlined

@@ -36,8 +36,8 @@
           <v-card-title>{{ campaign.name }}</v-card-title>
           <v-card-subtitle>{{ campaign.description }}</v-card-subtitle>
           <v-card-text>
-            <p><strong>Start date:</strong> {{ campaign.startDate }}</p>
-            <p><strong>End date:</strong> {{ campaign.endDate }}</p>
+            <p><strong>Start date:</strong> {{ formatDate(campaign.start_date) }}</p>
+            <p><strong>End date:</strong> {{ formatDate(campaign.end_date) }}</p>
             <p><strong>Budget:</strong> {{ campaign.budget }}€</p>
             <p>
               <strong>Status:</strong>
@@ -50,7 +50,7 @@
             <v-btn color="blue" @click="viewCampaign(campaign)">
               See More
             </v-btn>
-            <v-btn color="red" @click="deleteCampaign(index)"> Delete </v-btn>
+            <v-btn color="red" @click="askDeleteCampaign(index)"> Delete </v-btn>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -63,22 +63,17 @@
         }}</v-card-title>
 
         <v-card-text>
-          <v-text-field v-model="modalCampaign.name" label="Campaign Name" />
-          <v-textarea v-model="modalCampaign.description" label="Description" />
-          <v-text-field
-            v-model="modalCampaign.startDate"
-            label="Start Date"
-            type="date"
-          />
-          <v-text-field
-            v-model="modalCampaign.endDate"
-            label="End Date"
-            type="date"
-          />
+          <v-text-field v-model="modalCampaign.name" label="Campaign Name" :disabled="!isEditing"/>
+          <v-textarea v-model="modalCampaign.description" label="Description" :disabled="!isEditing" auto-grow/>
+          
+          <v-date-input v-model="modalCampaign.start_date" label="Start date" :disabled="!isEditing"></v-date-input>
+          <v-date-input v-model="modalCampaign.end_date" label="End date" :disabled="!isEditing"></v-date-input>
+          
           <v-text-field
             v-model="modalCampaign.budget"
             label="Budget"
             type="number"
+            :disabled="!isEditing"
           />
           <v-select
             v-model="modalCampaign.status"
@@ -89,6 +84,7 @@
             ]"
             item-title="text"
             item-value="value"
+            :disabled="!isEditing"
           />
         </v-card-text>
 
@@ -111,30 +107,42 @@
     </v-dialog>
 
     <v-dialog v-model="createDialog" max-width="500">
+      
       <v-card>
         <v-card-title>Create a Campaign</v-card-title>
 
         <v-card-text>
+          <v-alert
+              v-if="formErrors.length"
+              type="error"
+              class="mb-4"
+              dense
+              border="start"
+            >
+              <ul class="pl-4 no-bullets">
+                <li v-for="(error, index) in formErrors" :key="index">
+                  {{ error }}
+                </li>
+              </ul>
+            </v-alert>
           <v-text-field
             v-model="newCampaign.name"
             label="Campaign Name"
             required
           />
-          <v-textarea v-model="newCampaign.description" label="Description" />
-          <v-text-field
-            v-model="newCampaign.startDate"
-            label="Start Date"
-            type="date"
+          <v-textarea 
+          v-model="newCampaign.description" 
+          label="Description"
+
           />
-          <v-text-field
-            v-model="newCampaign.endDate"
-            label="End Date"
-            type="date"
-          />
+          <v-date-input v-model="newCampaign.start_date" label="Start date"></v-date-input>
+          <v-date-input v-model="newCampaign.end_date" label="End date"></v-date-input>
+          
           <v-text-field
             v-model="newCampaign.budget"
             label="Budget"
             type="number"
+
           />
           <v-select
             v-model="newCampaign.status"
@@ -155,6 +163,21 @@
       </v-card>
     </v-dialog>
   </v-container>
+
+  <v-dialog v-model="confirmDeleteDialog" max-width="400">
+  <v-card>
+    <v-card-title class="text-h6">Confirm Deletion</v-card-title>
+    <v-card-text>
+      Are you sure you want to delete this campaign ? This action cannot be undone.
+    </v-card-text>
+    <v-card-actions>
+      <v-spacer />
+      <v-btn color="grey" variant="text" @click="cancelDelete">Cancel</v-btn>
+      <v-btn color="red" variant="flat" @click="confirmDeleteCampaign">Delete</v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
+
 </template>
 
 <script setup>
@@ -170,55 +193,94 @@ const campaignStore = useCampaignStore();
 const dialog = ref(false);
 const createDialog = ref(false);
 const isEditing = ref(false);
+const submitted = ref(false);
+const formErrors = ref([]);
 const modalCampaign = ref({
   name: '',
   description: '',
-  startDate: '',
-  endDate: '',
+  start_date: '',
+  end_date: '',
   budget: '',
   status: 'Active',
 });
 const newCampaign = ref({
   name: '',
   description: '',
-  startDate: '',
-  endDate: '',
+  start_date: '',
+  end_date: '',
   budget: '',
   status: 'Active',
 });
 const campaigns = computed(() => campaignStore.campaigns);
+const confirmDeleteDialog = ref(false);
+const campaignToDelete = ref(null);
 
-onMounted(() => {
-  campaignStore.fetchCampaigns();
-});
+const askDeleteCampaign = (index) => {
+  campaignToDelete.value = index;
+  confirmDeleteDialog.value = true;
+};
+
+const cancelDelete = () => {
+  confirmDeleteDialog.value = false;
+  campaignToDelete.value = null;
+};
+
+const formatDate = (dateStr) => {
+    return dateStr ? dateStr.slice(0, 10) : '';
+};
+const isEmpty = (field) => {
+  return !field || String(field).trim() === '';
+};
 
 const openCampaignDialog = () => {
   newCampaign.value = {
     name: '',
     description: '',
-    startDate: '',
-    endDate: '',
+    start_date: '',
+    end_date: '',
     budget: '',
     status: 'Active',
   };
+  
   createDialog.value = true;
+  formErrors.value = [];
 };
 
 const submitCreateCampaign = async () => {
   const form = newCampaign.value;
+  formErrors.value = [];
+
+  if (
+    isEmpty(form.name) ||
+    isEmpty(form.description) ||
+    isEmpty(form.start_date) ||
+    isEmpty(form.end_date) ||
+    isEmpty(form.budget)
+  ) {
+    formErrors.value.push('All fields must be filled out.');
+  }
+
+  if (form.start_date && form.end_date) {
+    const start = new Date(form.start_date);
+    const end = new Date(form.end_date);
+    if (start >= end) {
+      formErrors.value.push('The start date must be earlier than the end date.');
+    }
+  }
+
+  if (formErrors.value.length > 0) return;
 
   const payload = {
     name: form.name,
     description: form.description,
-    start_date: new Date(form.startDate).toISOString(),
-    end_date: new Date(form.endDate).toISOString(),
+    start_date: new Date(form.start_date).toISOString(),
+    end_date: new Date(form.end_date).toISOString(),
     budget: parseInt(form.budget),
     status: form.status === true || form.status === 'Active',
   };
 
   await campaignStore.createCampaign(payload);
   createDialog.value = false;
-
   await fetchCampaigns();
 };
 
@@ -233,8 +295,12 @@ onMounted(() => {
 const backupCampaign = ref({});
 
 const viewCampaign = (campaign) => {
-  modalCampaign.value = { ...campaign };
-  backupCampaign.value = { ...campaign };
+  modalCampaign.value = {
+    ...campaign,
+    start_date: formatDate(campaign.start_date),
+    end_date: formatDate(campaign.end_date),
+  };
+  backupCampaign.value = { ...modalCampaign.value };
   isEditing.value = false;
   dialog.value = true;
 };
@@ -262,8 +328,13 @@ const cancelEdit = () => {
   modalCampaign.value = { ...backupCampaign.value };
 };
 
-const deleteCampaign = async (index) => {
-  await campaignStore.deleteCampaign(campaigns.value[index].id);
+const confirmDeleteCampaign = async () => {
+  if (campaignToDelete.value !== null) {
+    await campaignStore.deleteCampaign(campaigns.value[campaignToDelete.value].id);
+    await fetchCampaigns();
+    confirmDeleteDialog.value = false;
+    campaignToDelete.value = null;
+  }
 };
 
 const handleLogout = async () => {
@@ -276,6 +347,12 @@ const handleLogout = async () => {
 .v-container {
   padding-top: 80px !important;
   height: auto;
+}
+
+.no-bullets {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
 }
 
 .v-card {
@@ -300,5 +377,10 @@ const handleLogout = async () => {
 
 .disconnect {
   margin-inline-end: 20px !important;
+}
+
+.error-style .v-field {
+  border: 1px solid #f44336 !important;
+  border-radius: 4px;
 }
 </style>
