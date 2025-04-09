@@ -20,28 +20,29 @@
             </v-alert>
 
             <v-text-field
-              v-model="loginForm.email"
-              label="Identitiant"
-              type="email"
-              required
-              outlined
-            />
+  v-model="loginForm.email"
+  label="Identifiant"
+  type="email"
+  data-cy="login-email"
+  required
+  outlined
+/>
 
             <v-text-field
-              v-model="loginForm.password"
-              label="Password"
-              :type="showLoginPassword ? 'text' : 'password'"
-              required
-              outlined
-              :append-inner-icon="showLoginPassword ? 'mdi-eye-off' : 'mdi-eye'"
-              @click:append-inner="showLoginPassword = !showLoginPassword"
-            />
+  v-model="loginForm.password"
+  label="Password"
+  :type="showLoginPassword ? 'text' : 'password'"
+  data-cy="login-password"
+  required
+  outlined
+/>
 
             <v-btn
               type="submit"
               block
               class="mt-4"
               color="primary"
+              data-cy="login-submit"
               :loading="authStore.isLoading"
               :disabled="authStore.isLoading"
               size="large"
@@ -67,6 +68,8 @@
               v-model="registerForm.username"
               label="Username"
               required
+                data-cy="register-username"
+
               outlined
             />
 
@@ -75,6 +78,8 @@
               label="Email"
               type="email"
               required
+                data-cy="register-email"
+
               outlined
               :rules="[emailRules]"
             />
@@ -85,6 +90,8 @@
               :type="showRegisterPassword ? 'text' : 'password'"
               required
               outlined
+                data-cy="register-password"
+
               :rules="[passwordRules]"
               :append-inner-icon="
                 showRegisterPassword ? 'mdi-eye-off' : 'mdi-eye'
@@ -97,6 +104,8 @@
               label="Confirm Password"
               :type="showConfirmPassword ? 'text' : 'password'"
               required
+                data-cy="register-confirm"
+
               outlined
               :rules="[passwordMatch]"
               :append-inner-icon="
@@ -110,6 +119,8 @@
               block
               class="mt-4"
               color="secondary"
+              data-cy="register-submit"
+
               :loading="authStore.isLoading"
               :disabled="authStore.isLoading"
               size="large"

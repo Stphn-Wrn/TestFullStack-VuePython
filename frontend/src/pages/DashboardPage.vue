@@ -10,6 +10,7 @@
         variant="outlined"
         color="black"
         class="ml-2 disconnect"
+        
         @click="handleLogout"
       >
         Disconnect
