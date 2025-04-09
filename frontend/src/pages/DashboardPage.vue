@@ -63,6 +63,17 @@
         }}</v-card-title>
 
         <v-card-text>
+          <v-alert
+            v-if="updateErrors.length"
+            type="error"
+            class="mb-4"
+            dense
+            border="start"
+          >
+            <ul class="pl-4 no-bullets">
+              <li v-for="(err, index) in updateErrors" :key="index">{{ err }}</li>
+            </ul>
+          </v-alert>
           <v-text-field v-model="modalCampaign.name" label="Campaign Name" :disabled="!isEditing"/>
           <v-textarea v-model="modalCampaign.description" label="Description" :disabled="!isEditing" auto-grow/>
           
@@ -177,6 +188,9 @@
     </v-card-actions>
   </v-card>
 </v-dialog>
+<v-snackbar v-model="showSnackbar" timeout="3000" color="info">
+  {{ toastMessage }}
+</v-snackbar>
 
 </template>
 
@@ -195,6 +209,7 @@ const createDialog = ref(false);
 const isEditing = ref(false);
 const submitted = ref(false);
 const formErrors = ref([]);
+const updateErrors = ref([]);
 const modalCampaign = ref({
   name: '',
   description: '',
@@ -214,6 +229,13 @@ const newCampaign = ref({
 const campaigns = computed(() => campaignStore.campaigns);
 const confirmDeleteDialog = ref(false);
 const campaignToDelete = ref(null);
+const toastMessage = ref('');
+const showSnackbar = ref(false);
+
+const showToast = (message) => {
+  toastMessage.value = message;
+  showSnackbar.value = true;
+};
 
 const askDeleteCampaign = (index) => {
   campaignToDelete.value = index;
@@ -311,17 +333,56 @@ const toggleEditMode = () => {
 };
 
 const saveCampaign = async () => {
-  if (isEditing.value) {
-    await campaignStore.updateCampaign(
-      modalCampaign.value.id,
-      modalCampaign.value,
-    );
+  if (!isEditing.value) return;
+
+  updateErrors.value = [];
+
+  const allowedFields = ['name', 'description', 'start_date', 'end_date', 'budget', 'status'];
+  const payload = {};
+
+  allowedFields.forEach((field) => {
+    if (modalCampaign.value[field] !== backupCampaign.value[field]) {
+      payload[field] = modalCampaign.value[field];
+    }
+  });
+
+
+  const requiredFields = ['name', 'description', 'start_date', 'end_date', 'budget'];
+  requiredFields.forEach((field) => {
+    const value = payload[field] !== undefined ? payload[field] : modalCampaign.value[field];
+    if (!String(value).trim()) {
+      updateErrors.value.push(`The "${field}" field cannot be empty.`);
+    }
+  });
+
+  const start = payload.start_date || modalCampaign.value.start_date;
+  const end = payload.end_date || modalCampaign.value.end_date;
+
+  if (start && end) {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (startDate >= endDate) {
+      updateErrors.value.push('The start date must be earlier than the end date.');
+    }
   }
 
+  if (updateErrors.value.length > 0) return;
+
+  if (Object.keys(payload).length === 0) {
+    showToast('No changes detected.');
+    dialog.value = false;
+    isEditing.value = false;
+    return;
+  }
+
+  const result = await campaignStore.updateCampaign(modalCampaign.value.id, payload);
+
+  showToast(result.message);
   dialog.value = false;
   isEditing.value = false;
   await fetchCampaigns();
 };
+
 
 const cancelEdit = () => {
   isEditing.value = false;

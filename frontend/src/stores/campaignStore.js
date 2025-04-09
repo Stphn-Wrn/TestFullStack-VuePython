@@ -48,22 +48,31 @@ export const useCampaignStore = defineStore('campaign', {
       this.isLoading = true;
       this.error = null;
       try {
-        const response = await apiClient.put(
+        const response = await apiClient.patch(
           `/campaigns/${campaignId}`,
           campaignData,
         );
+    
+        if (response.data.message === 'No fields to update') {
+          return { updated: false, message: response.data.message };
+        }
+    
         const index = this.campaigns.findIndex(
           (campaign) => campaign.id === campaignId,
         );
         if (index !== -1) {
-          this.campaigns[index] = response.data.data; // Mise à jour de la campagne existante
+          this.campaigns[index] = response.data.data;
         }
+    
+        return { updated: true, message: 'Campaign updated successfully' };
       } catch (error) {
         this.error = 'Failed to update campaign.';
+        return { updated: false, error: this.error };
       } finally {
         this.isLoading = false;
       }
     },
+    
 
     async deleteCampaign(campaignId) {
       this.isLoading = true;
