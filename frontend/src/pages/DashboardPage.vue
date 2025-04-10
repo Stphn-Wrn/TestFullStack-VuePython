@@ -3,14 +3,18 @@
     <v-app-bar color="primary" dense>
       <v-toolbar-title>Dashboard</v-toolbar-title>
       <v-spacer />
-      <v-btn variant="outlined" @click="openCampaignDialog">
+      <v-btn
+        variant="outlined"
+        data-cy="open-create-dialog"
+        @click="openCampaignDialog"
+      >
         Create a campaign
       </v-btn>
       <v-btn
         variant="outlined"
         color="black"
         class="ml-2 disconnect"
-        
+        data-cy="logout-btn"
         @click="handleLogout"
       >
         Disconnect
@@ -33,12 +37,16 @@
         cols="12"
         md="4"
       >
-        <v-card>
+        <v-card :data-cy="`campaign-card-${campaign.id}`">
           <v-card-title>{{ campaign.name }}</v-card-title>
           <v-card-subtitle>{{ campaign.description }}</v-card-subtitle>
           <v-card-text>
-            <p><strong>Start date:</strong> {{ formatDate(campaign.start_date) }}</p>
-            <p><strong>End date:</strong> {{ formatDate(campaign.end_date) }}</p>
+            <p>
+              <strong>Start date:</strong> {{ formatDate(campaign.start_date) }}
+            </p>
+            <p>
+              <strong>End date:</strong> {{ formatDate(campaign.end_date) }}
+            </p>
             <p><strong>Budget:</strong> {{ campaign.budget }}€</p>
             <p>
               <strong>Status:</strong>
@@ -48,10 +56,20 @@
             </p>
           </v-card-text>
           <v-card-actions>
-            <v-btn color="blue" @click="viewCampaign(campaign)">
+            <v-btn
+              color="blue"
+              data-cy="view-campaign-btn"
+              @click="viewCampaign(campaign)"
+            >
               See More
             </v-btn>
-            <v-btn color="red" @click="askDeleteCampaign(index)"> Delete </v-btn>
+            <v-btn
+              color="red"
+              data-cy="delete-campaign-btn"
+              @click="askDeleteCampaign(index)"
+            >
+              Delete
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -72,24 +90,49 @@
             border="start"
           >
             <ul class="pl-4 no-bullets">
-              <li v-for="(err, index) in updateErrors" :key="index">{{ err }}</li>
+              <li v-for="(err, index) in updateErrors" :key="index">
+                {{ err }}
+              </li>
             </ul>
           </v-alert>
-          <v-text-field v-model="modalCampaign.name" label="Campaign Name" :disabled="!isEditing"/>
-          <v-textarea v-model="modalCampaign.description" label="Description" :disabled="!isEditing" auto-grow/>
-          
-          <v-date-input v-model="modalCampaign.start_date" label="Start date" :disabled="!isEditing"></v-date-input>
-          <v-date-input v-model="modalCampaign.end_date" label="End date" :disabled="!isEditing"></v-date-input>
-          
+          <v-text-field
+            v-model="modalCampaign.name"
+            label="Campaign Name"
+            :disabled="!isEditing"
+            data-cy="edit-name"
+          />
+          <v-textarea
+            v-model="modalCampaign.description"
+            label="Description"
+            :disabled="!isEditing"
+            auto-grow
+            data-cy="edit-description"
+          />
+
+          <v-date-input
+            v-model="modalCampaign.start_date"
+            label="Start date"
+            :disabled="!isEditing"
+            data-cy="edit-start"
+          ></v-date-input>
+          <v-date-input
+            v-model="modalCampaign.end_date"
+            label="End date"
+            :disabled="!isEditing"
+            data-cy="edit-end"
+          ></v-date-input>
+
           <v-text-field
             v-model="modalCampaign.budget"
             label="Budget"
             type="number"
+            data-cy="edit-budget"
             :disabled="!isEditing"
           />
           <v-select
             v-model="modalCampaign.status"
             label="Status"
+            data-cy="edit-status"
             :items="[
               { text: 'Active', value: true },
               { text: 'Inactive', value: false },
@@ -110,6 +153,7 @@
 
           <v-btn
             color="primary"
+            data-cy="edit-save"
             @click="isEditing ? saveCampaign() : toggleEditMode()"
           >
             {{ isEditing ? 'Save Changes' : 'Edit' }}
@@ -119,46 +163,55 @@
     </v-dialog>
 
     <v-dialog v-model="createDialog" max-width="500">
-      
       <v-card>
         <v-card-title>Create a Campaign</v-card-title>
 
         <v-card-text>
           <v-alert
-              v-if="formErrors.length"
-              type="error"
-              class="mb-4"
-              dense
-              border="start"
-            >
-              <ul class="pl-4 no-bullets">
-                <li v-for="(error, index) in formErrors" :key="index">
-                  {{ error }}
-                </li>
-              </ul>
-            </v-alert>
+            v-if="formErrors.length"
+            type="error"
+            class="mb-4"
+            dense
+            border="start"
+          >
+            <ul class="pl-4 no-bullets">
+              <li v-for="(error, index) in formErrors" :key="index">
+                {{ error }}
+              </li>
+            </ul>
+          </v-alert>
           <v-text-field
             v-model="newCampaign.name"
             label="Campaign Name"
             required
+            data-cy="create-name"
           />
-          <v-textarea 
-          v-model="newCampaign.description" 
-          label="Description"
+          <v-textarea
+            v-model="newCampaign.description"
+            label="Description"
+            data-cy="create-description"
+          />
+          <v-date-input
+            v-model="newCampaign.start_date"
+            label="Start date"
+            data-cy="create-start"
+          ></v-date-input>
+          <v-date-input
+            v-model="newCampaign.end_date"
+            label="End date"
+            data-cy="create-end"
+          ></v-date-input>
 
-          />
-          <v-date-input v-model="newCampaign.start_date" label="Start date"></v-date-input>
-          <v-date-input v-model="newCampaign.end_date" label="End date"></v-date-input>
-          
           <v-text-field
             v-model="newCampaign.budget"
             label="Budget"
             type="number"
-
+            data-cy="create-budget"
           />
           <v-select
             v-model="newCampaign.status"
             label="Status"
+            data-cy="create-status"
             :items="[
               { text: 'Active', value: true },
               { text: 'Inactive', value: false },
@@ -170,29 +223,39 @@
 
         <v-card-actions>
           <v-btn color="grey" @click="createDialog = false"> Cancel </v-btn>
-          <v-btn color="primary" @click="submitCreateCampaign"> Create </v-btn>
+          <v-btn
+            color="primary"
+            data-cy="create-submit"
+            @click="submitCreateCampaign"
+          >
+            Create
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-dialog v-model="confirmDeleteDialog" max-width="400">
+      <v-card>
+        <v-card-title class="text-h6">Confirm Deletion</v-card-title>
+        <v-card-text>
+          Are you sure you want to delete this campaign ? This action cannot be
+          undone.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="grey" variant="text" @click="cancelDelete"
+            >Cancel</v-btn
+          >
+          <v-btn color="red" variant="flat" @click="confirmDeleteCampaign"
+            >Delete</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-snackbar v-model="showSnackbar" timeout="3000" color="info">
+      {{ toastMessage }}
+    </v-snackbar>
   </v-container>
-
-  <v-dialog v-model="confirmDeleteDialog" max-width="400">
-  <v-card>
-    <v-card-title class="text-h6">Confirm Deletion</v-card-title>
-    <v-card-text>
-      Are you sure you want to delete this campaign ? This action cannot be undone.
-    </v-card-text>
-    <v-card-actions>
-      <v-spacer />
-      <v-btn color="grey" variant="text" @click="cancelDelete">Cancel</v-btn>
-      <v-btn color="red" variant="flat" @click="confirmDeleteCampaign">Delete</v-btn>
-    </v-card-actions>
-  </v-card>
-</v-dialog>
-<v-snackbar v-model="showSnackbar" timeout="3000" color="info">
-  {{ toastMessage }}
-</v-snackbar>
-
 </template>
 
 <script setup>
@@ -208,7 +271,6 @@ const campaignStore = useCampaignStore();
 const dialog = ref(false);
 const createDialog = ref(false);
 const isEditing = ref(false);
-const submitted = ref(false);
 const formErrors = ref([]);
 const updateErrors = ref([]);
 const modalCampaign = ref({
@@ -249,7 +311,7 @@ const cancelDelete = () => {
 };
 
 const formatDate = (dateStr) => {
-    return dateStr ? dateStr.slice(0, 10) : '';
+  return dateStr ? dateStr.slice(0, 10) : '';
 };
 const isEmpty = (field) => {
   return !field || String(field).trim() === '';
@@ -264,7 +326,7 @@ const openCampaignDialog = () => {
     budget: '',
     status: 'Active',
   };
-  
+
   createDialog.value = true;
   formErrors.value = [];
 };
@@ -287,7 +349,9 @@ const submitCreateCampaign = async () => {
     const start = new Date(form.start_date);
     const end = new Date(form.end_date);
     if (start >= end) {
-      formErrors.value.push('The start date must be earlier than the end date.');
+      formErrors.value.push(
+        'The start date must be earlier than the end date.',
+      );
     }
   }
 
@@ -338,7 +402,14 @@ const saveCampaign = async () => {
 
   updateErrors.value = [];
 
-  const allowedFields = ['name', 'description', 'start_date', 'end_date', 'budget', 'status'];
+  const allowedFields = [
+    'name',
+    'description',
+    'start_date',
+    'end_date',
+    'budget',
+    'status',
+  ];
   const payload = {};
 
   allowedFields.forEach((field) => {
@@ -347,10 +418,18 @@ const saveCampaign = async () => {
     }
   });
 
-
-  const requiredFields = ['name', 'description', 'start_date', 'end_date', 'budget'];
+  const requiredFields = [
+    'name',
+    'description',
+    'start_date',
+    'end_date',
+    'budget',
+  ];
   requiredFields.forEach((field) => {
-    const value = payload[field] !== undefined ? payload[field] : modalCampaign.value[field];
+    const value =
+      payload[field] !== undefined
+        ? payload[field]
+        : modalCampaign.value[field];
     if (!String(value).trim()) {
       updateErrors.value.push(`The "${field}" field cannot be empty.`);
     }
@@ -363,7 +442,9 @@ const saveCampaign = async () => {
     const startDate = new Date(start);
     const endDate = new Date(end);
     if (startDate >= endDate) {
-      updateErrors.value.push('The start date must be earlier than the end date.');
+      updateErrors.value.push(
+        'The start date must be earlier than the end date.',
+      );
     }
   }
 
@@ -376,14 +457,16 @@ const saveCampaign = async () => {
     return;
   }
 
-  const result = await campaignStore.updateCampaign(modalCampaign.value.id, payload);
+  const result = await campaignStore.updateCampaign(
+    modalCampaign.value.id,
+    payload,
+  );
 
   showToast(result.message);
   dialog.value = false;
   isEditing.value = false;
   await fetchCampaigns();
 };
-
 
 const cancelEdit = () => {
   isEditing.value = false;
@@ -392,7 +475,9 @@ const cancelEdit = () => {
 
 const confirmDeleteCampaign = async () => {
   if (campaignToDelete.value !== null) {
-    await campaignStore.deleteCampaign(campaigns.value[campaignToDelete.value].id);
+    await campaignStore.deleteCampaign(
+      campaigns.value[campaignToDelete.value].id,
+    );
     await fetchCampaigns();
     confirmDeleteDialog.value = false;
     campaignToDelete.value = null;

@@ -52,18 +52,18 @@ export const useCampaignStore = defineStore('campaign', {
           `/campaigns/${campaignId}`,
           campaignData,
         );
-    
+
         if (response.data.message === 'No fields to update') {
           return { updated: false, message: response.data.message };
         }
-    
+
         const index = this.campaigns.findIndex(
           (campaign) => campaign.id === campaignId,
         );
         if (index !== -1) {
           this.campaigns[index] = response.data.data;
         }
-    
+
         return { updated: true, message: 'Campaign updated successfully' };
       } catch (error) {
         this.error = 'Failed to update campaign.';
@@ -72,7 +72,6 @@ export const useCampaignStore = defineStore('campaign', {
         this.isLoading = false;
       }
     },
-    
 
     async deleteCampaign(campaignId) {
       this.isLoading = true;

@@ -15,27 +15,28 @@
               class="mb-4"
               density="compact"
               border="start"
+              data-cy="auth-error"
             >
               {{ authStore.error }}
             </v-alert>
 
             <v-text-field
-  v-model="loginForm.email"
-  label="Identifiant"
-  type="email"
-  data-cy="login-email"
-  required
-  outlined
-/>
+              v-model="loginForm.email"
+              label="Identifiant"
+              type="email"
+              data-cy="login-email"
+              required
+              outlined
+            />
 
             <v-text-field
-  v-model="loginForm.password"
-  label="Password"
-  :type="showLoginPassword ? 'text' : 'password'"
-  data-cy="login-password"
-  required
-  outlined
-/>
+              v-model="loginForm.password"
+              label="Password"
+              :type="showLoginPassword ? 'text' : 'password'"
+              data-cy="login-password"
+              required
+              outlined
+            />
 
             <v-btn
               type="submit"
@@ -68,8 +69,7 @@
               v-model="registerForm.username"
               label="Username"
               required
-                data-cy="register-username"
-
+              data-cy="register-username"
               outlined
             />
 
@@ -78,8 +78,7 @@
               label="Email"
               type="email"
               required
-                data-cy="register-email"
-
+              data-cy="register-email"
               outlined
               :rules="[emailRules]"
             />
@@ -90,8 +89,7 @@
               :type="showRegisterPassword ? 'text' : 'password'"
               required
               outlined
-                data-cy="register-password"
-
+              data-cy="register-password"
               :rules="[passwordRules]"
               :append-inner-icon="
                 showRegisterPassword ? 'mdi-eye-off' : 'mdi-eye'
@@ -104,8 +102,7 @@
               label="Confirm Password"
               :type="showConfirmPassword ? 'text' : 'password'"
               required
-                data-cy="register-confirm"
-
+              data-cy="register-confirm"
               outlined
               :rules="[passwordMatch]"
               :append-inner-icon="
@@ -120,7 +117,6 @@
               class="mt-4"
               color="secondary"
               data-cy="register-submit"
-
               :loading="authStore.isLoading"
               :disabled="authStore.isLoading"
               size="large"
