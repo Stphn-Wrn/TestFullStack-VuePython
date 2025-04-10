@@ -1,5 +1,5 @@
 import axios from 'axios';
-
+import { useAuthStore } from '@/stores/authStore';
 const apiClient = axios.create({
   baseURL: 'http://localhost:8000/api',
   withCredentials: true,
@@ -8,6 +8,8 @@ const apiClient = axios.create({
     Accept: 'application/json',
   },
 });
+let isRefreshing = false;
+let failedRequests = [];
 
 async function sha256(text) {
   const encoder = new TextEncoder();
@@ -20,7 +22,7 @@ async function sha256(text) {
 const shouldHashPassword = (url) =>
   ['/auth/login', '/auth/register'].some((endpoint) => url.includes(endpoint));
 
-function getCookie(name) {
+export function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
@@ -51,5 +53,48 @@ apiClient.interceptors.request.use(async (config) => {
     return Promise.reject(error);
   }
 });
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    const authStore = useAuthStore();
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes('/auth/')
+    ) {
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          failedRequests.push(() => resolve(apiClient(originalRequest)));
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        await authStore.refreshToken();
+
+        const newCsrfToken = getCookie('csrf_access_token');
+        if (newCsrfToken) {
+          originalRequest.headers['X-CSRF-TOKEN'] = newCsrfToken;
+        }
+
+        failedRequests.forEach((cb) => cb());
+        failedRequests = [];
+
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        await authStore.logout();
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 export default apiClient;

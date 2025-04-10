@@ -37,8 +37,10 @@
         cols="12"
         md="4"
       >
-        <v-card :data-cy="`campaign-card-${campaign.id}`">
-          <v-card-title>{{ campaign.name }}</v-card-title>
+        <v-card>
+          <v-card-title :data-cy="`campaign-title-${campaign.name}`">{{
+            campaign.name
+          }}</v-card-title>
           <v-card-subtitle>{{ campaign.description }}</v-card-subtitle>
           <v-card-text>
             <p>
@@ -50,8 +52,8 @@
             <p><strong>Budget:</strong> {{ campaign.budget }}€</p>
             <p>
               <strong>Status:</strong>
-              <v-chip :color="campaign.status ? 'green' : 'red'">
-                {{ campaign.status ? 'Actif' : 'Inactif' }}
+              <v-chip :color="campaign.is_active ? 'green' : 'red'">
+                {{ campaign.is_active ? 'Active' : 'Inactive' }}
               </v-chip>
             </p>
           </v-card-text>
@@ -130,7 +132,7 @@
             :disabled="!isEditing"
           />
           <v-select
-            v-model="modalCampaign.status"
+            v-model="modalCampaign.is_active"
             label="Status"
             data-cy="edit-status"
             :items="[
@@ -209,7 +211,7 @@
             data-cy="create-budget"
           />
           <v-select
-            v-model="newCampaign.status"
+            v-model="newCampaign.is_active"
             label="Status"
             data-cy="create-status"
             :items="[
@@ -279,7 +281,7 @@ const modalCampaign = ref({
   start_date: '',
   end_date: '',
   budget: '',
-  status: 'Active',
+  is_active: 'Active',
 });
 const newCampaign = ref({
   name: '',
@@ -287,7 +289,7 @@ const newCampaign = ref({
   start_date: '',
   end_date: '',
   budget: '',
-  status: 'Active',
+  is_active: 'Active',
 });
 const campaigns = computed(() => campaignStore.campaigns);
 const confirmDeleteDialog = ref(false);
@@ -324,7 +326,7 @@ const openCampaignDialog = () => {
     start_date: '',
     end_date: '',
     budget: '',
-    status: 'Active',
+    is_active: 'Active',
   };
 
   createDialog.value = true;
@@ -363,7 +365,7 @@ const submitCreateCampaign = async () => {
     start_date: new Date(form.start_date).toISOString(),
     end_date: new Date(form.end_date).toISOString(),
     budget: parseInt(form.budget),
-    status: form.status === true || form.status === 'Active',
+    is_active: form.is_active === true || form.is_active === 'Active',
   };
 
   await campaignStore.createCampaign(payload);
@@ -402,22 +404,6 @@ const saveCampaign = async () => {
 
   updateErrors.value = [];
 
-  const allowedFields = [
-    'name',
-    'description',
-    'start_date',
-    'end_date',
-    'budget',
-    'status',
-  ];
-  const payload = {};
-
-  allowedFields.forEach((field) => {
-    if (modalCampaign.value[field] !== backupCampaign.value[field]) {
-      payload[field] = modalCampaign.value[field];
-    }
-  });
-
   const requiredFields = [
     'name',
     'description',
@@ -426,46 +412,57 @@ const saveCampaign = async () => {
     'budget',
   ];
   requiredFields.forEach((field) => {
-    const value =
-      payload[field] !== undefined
-        ? payload[field]
-        : modalCampaign.value[field];
-    if (!String(value).trim()) {
-      updateErrors.value.push(`The "${field}" field cannot be empty.`);
+    const value = modalCampaign.value[field];
+    if (!value && value !== 0) {
+      updateErrors.value.push(`Le champ "${field}" est obligatoire.`);
     }
   });
 
-  const start = payload.start_date || modalCampaign.value.start_date;
-  const end = payload.end_date || modalCampaign.value.end_date;
+  if (modalCampaign.value.start_date && modalCampaign.value.end_date) {
+    const startDate = new Date(modalCampaign.value.start_date);
+    const endDate = new Date(modalCampaign.value.end_date);
 
-  if (start && end) {
-    const startDate = new Date(start);
-    const endDate = new Date(end);
     if (startDate >= endDate) {
       updateErrors.value.push(
-        'The start date must be earlier than the end date.',
+        'La date de fin doit être après la date de début.',
       );
     }
   }
 
-  if (updateErrors.value.length > 0) return;
-
-  if (Object.keys(payload).length === 0) {
-    showToast('No changes detected.');
-    dialog.value = false;
-    isEditing.value = false;
+  if (updateErrors.value.length > 0) {
+    showToast('Veuillez corriger les erreurs dans le formulaire.');
     return;
   }
 
-  const result = await campaignStore.updateCampaign(
-    modalCampaign.value.id,
-    payload,
-  );
+  const payload = {
+    name: modalCampaign.value.name,
+    description: modalCampaign.value.description,
+    start_date: new Date(modalCampaign.value.start_date).toISOString(),
+    end_date: new Date(modalCampaign.value.end_date).toISOString(),
+    budget: Number(modalCampaign.value.budget),
+    is_active: modalCampaign.value.is_active,
+  };
 
-  showToast(result.message);
-  dialog.value = false;
-  isEditing.value = false;
-  await fetchCampaigns();
+  try {
+    const result = await campaignStore.updateCampaign(
+      modalCampaign.value.id,
+      payload,
+    );
+
+    if (result.success) {
+      showToast(result.message || 'Campagne mise à jour avec succès !');
+      await fetchCampaigns();
+      dialog.value = false;
+      isEditing.value = false;
+    } else {
+      showToast(result.message || 'Erreur lors de la mise à jour');
+    }
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde :', error);
+    showToast(error.message || 'Une erreur inattendue est survenue');
+  } finally {
+    isEditing.value = false;
+  }
 };
 
 const cancelEdit = () => {

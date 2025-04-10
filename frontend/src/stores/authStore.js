@@ -44,54 +44,52 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async fetchUser() {
-      this.isLoading = true;
-      this.error = null;
-
+    async refreshToken() {
       try {
+        const response = await apiClient.post('/auth/refresh');
+
+        return response.status === 200;
+      } catch (error) {
+        await this.logout();
+        throw error;
+      }
+    },
+    async fetchUser() {
+      try {
+        // Le cookie access_token est envoyé automatiquement
         const { data } = await apiClient.get('/auth/me');
         this.user = data;
-        this.justLoggedIn = false;
-
         return true;
       } catch (error) {
-        this.user = null;
-
-        const message =
-          error.response?.data?.msg ||
-          error.response?.data?.error ||
-          "Échec de la vérification de l'utilisateur";
-
         if (error.response?.status === 401) {
-          console.warn('Non autorisé');
-        } else {
-          console.error('Erreur fetchUser:', message);
-          this.error = message;
+          const refreshed = await this.refreshToken();
+          if (refreshed) return this.fetchUser();
         }
-
-        return false;
-      } finally {
-        this.isLoading = false;
+        throw error;
       }
     },
 
-    async register(userData) {
+    async register(credentials) {
       this.isLoading = true;
       this.error = null;
 
       try {
-        await apiClient.post('/auth/register', userData);
-        const me = await apiClient.get('/auth/me');
-        this.user = me.data;
-        return true;
-      } catch (error) {
-        const raw = error.response?.data?.error || 'Registration failed';
+        const res = await apiClient.post('/auth/register', credentials);
 
-        if (raw.includes('Email') || raw.includes('Username')) {
-          this.error =
-            'Unable to create account. Please check your email and password.';
+        if (res.status === 201) {
+          await this.fetchUser();
+          return true;
+        }
+        return false;
+      } catch (error) {
+        const err = error.response?.data?.error;
+
+        // Gestion des erreurs de validation retournées en objet
+        if (err && typeof err === 'object') {
+          const firstField = Object.keys(err)[0];
+          this.error = err[firstField][0]; // Prend le premier message d'erreur
         } else {
-          this.error = 'An error occurred. Please try again.';
+          this.error = err || 'Registration failed';
         }
 
         return false;
