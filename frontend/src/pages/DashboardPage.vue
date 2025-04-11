@@ -1,263 +1,282 @@
 <template>
-  <v-container>
-    <v-app-bar color="primary" dense>
+  <v-app>
+    <!-- AppBar + Drawer -->
+    <v-app-bar color="primary" dense app>
+      <v-app-bar-nav-icon class="d-sm-none" @click="drawer = !drawer" />
       <v-toolbar-title>Dashboard</v-toolbar-title>
       <v-spacer />
-      <v-btn
-        variant="outlined"
-        data-cy="open-create-dialog"
-        @click="openCampaignDialog"
-      >
-        Create a campaign
-      </v-btn>
-      <v-btn
-        variant="outlined"
-        color="black"
-        class="ml-2 disconnect"
-        data-cy="logout-btn"
-        @click="handleLogout"
-      >
-        Disconnect
-      </v-btn>
+      <div class="d-none d-sm-flex">
+        <v-btn
+          variant="outlined"
+          data-cy="open-create-dialog"
+          @click="openCampaignDialog"
+        >
+          Create a campaign
+        </v-btn>
+        <v-btn
+          variant="outlined"
+          color="black"
+          class="ml-2 disconnect"
+          data-cy="logout-btn"
+          @click="handleLogout"
+        >
+          Disconnect
+        </v-btn>
+      </div>
     </v-app-bar>
 
-    <v-row>
-      <v-col
-        v-if="!campaignStore.isLoading && campaigns.length === 0"
-        cols="12"
-      >
-        <v-alert type="info" border="left" colored-border>
-          No campaigns found. Click on "Create a campaign" to get started.
-        </v-alert>
-      </v-col>
+    <v-navigation-drawer v-model="drawer" temporary class="d-sm-none">
+      <v-list nav>
+        <v-list-item @click="handleDrawerClick(openCampaignDialog)">
+          <v-list-item-title>Create a campaign</v-list-item-title>
+        </v-list-item>
+        <v-list-item @click="handleDrawerClick(handleLogout)">
+          <v-list-item-title>Disconnect</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
 
-      <v-col
-        v-for="(campaign, index) in campaigns"
-        :key="index"
-        cols="12"
-        md="4"
-      >
-        <v-card>
-          <v-card-title :data-cy="`campaign-title-${campaign.name}`">{{
-            campaign.name
-          }}</v-card-title>
-          <v-card-subtitle>{{ campaign.description }}</v-card-subtitle>
-          <v-card-text>
-            <p>
-              <strong>Start date:</strong> {{ formatDate(campaign.start_date) }}
-            </p>
-            <p>
-              <strong>End date:</strong> {{ formatDate(campaign.end_date) }}
-            </p>
-            <p><strong>Budget:</strong> {{ campaign.budget }}€</p>
-            <p>
-              <strong>Status:</strong>
-              <v-chip :color="campaign.is_active ? 'green' : 'red'">
-                {{ campaign.is_active ? 'Active' : 'Inactive' }}
-              </v-chip>
-            </p>
-          </v-card-text>
-          <v-card-actions>
-            <v-btn
-              color="blue"
-              data-cy="view-campaign-btn"
-              @click="viewCampaign(campaign)"
-            >
-              See More
-            </v-btn>
-            <v-btn
-              color="red"
-              data-cy="delete-campaign-btn"
-              @click="askDeleteCampaign(index)"
-            >
-              Delete
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <v-dialog v-model="dialog" max-width="500">
-      <v-card>
-        <v-card-title>{{
-          isEditing ? 'Edit Campaign' : 'Campaign Details'
-        }}</v-card-title>
-
-        <v-card-text>
-          <v-alert
-            v-if="updateErrors.length"
-            type="error"
-            class="mb-4"
-            dense
-            border="start"
+    <v-main>
+      <v-container fluid>
+        <v-row>
+          <v-col
+            v-if="!campaignStore.isLoading && campaigns.length === 0"
+            cols="12"
           >
-            <ul class="pl-4 no-bullets">
-              <li v-for="(err, index) in updateErrors" :key="index">
-                {{ err }}
-              </li>
-            </ul>
-          </v-alert>
-          <v-text-field
-            v-model="modalCampaign.name"
-            label="Campaign Name"
-            :disabled="!isEditing"
-            data-cy="edit-name"
-          />
-          <v-textarea
-            v-model="modalCampaign.description"
-            label="Description"
-            :disabled="!isEditing"
-            auto-grow
-            data-cy="edit-description"
-          />
+            <v-alert type="info" border="left" colored-border>
+              No campaigns found. Click on "Create a campaign" to get started.
+            </v-alert>
+          </v-col>
 
-          <v-date-input
-            v-model="modalCampaign.start_date"
-            label="Start date"
-            :disabled="!isEditing"
-            data-cy="edit-start"
-          ></v-date-input>
-          <v-date-input
-            v-model="modalCampaign.end_date"
-            label="End date"
-            :disabled="!isEditing"
-            data-cy="edit-end"
-          ></v-date-input>
-
-          <v-text-field
-            v-model="modalCampaign.budget"
-            label="Budget"
-            type="number"
-            data-cy="edit-budget"
-            :disabled="!isEditing"
-          />
-          <v-select
-            v-model="modalCampaign.is_active"
-            label="Status"
-            data-cy="edit-status"
-            :items="[
-              { text: 'Active', value: true },
-              { text: 'Inactive', value: false },
-            ]"
-            item-title="text"
-            item-value="value"
-            :disabled="!isEditing"
-          />
-        </v-card-text>
-
-        <v-card-actions>
-          <v-btn
-            color="red"
-            @click="isEditing ? cancelEdit() : (dialog = false)"
+          <v-col
+            v-for="(campaign, index) in campaigns"
+            :key="index"
+            cols="12"
+            sm="6"
+            md="4"
           >
-            {{ isEditing ? 'Cancel Edit' : 'Close' }}
-          </v-btn>
+            <v-card>
+              <v-card-title :data-cy="`campaign-title-${campaign.name}`">{{
+                campaign.name
+              }}</v-card-title>
+              <v-card-subtitle>{{ campaign.description }}</v-card-subtitle>
+              <v-card-text>
+                <p>
+                  <strong>Start date:</strong>
+                  {{ formatDate(campaign.start_date) }}
+                </p>
+                <p>
+                  <strong>End date:</strong> {{ formatDate(campaign.end_date) }}
+                </p>
+                <p><strong>Budget:</strong> {{ campaign.budget }}€</p>
+                <p>
+                  <strong>Status:</strong>
+                  <v-chip :color="campaign.is_active ? 'green' : 'red'">
+                    {{ campaign.is_active ? 'Active' : 'Inactive' }}
+                  </v-chip>
+                </p>
+              </v-card-text>
+              <v-card-actions>
+                <v-btn
+                  color="blue"
+                  data-cy="view-campaign-btn"
+                  @click="viewCampaign(campaign)"
+                  >See More</v-btn
+                >
+                <v-btn
+                  color="red"
+                  data-cy="delete-campaign-btn"
+                  @click="askDeleteCampaign(index)"
+                  >Delete</v-btn
+                >
+              </v-card-actions>
+            </v-card>
+          </v-col>
+        </v-row>
 
-          <v-btn
-            color="primary"
-            data-cy="edit-save"
-            @click="isEditing ? saveCampaign() : toggleEditMode()"
-          >
-            {{ isEditing ? 'Save Changes' : 'Edit' }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+        <v-dialog v-model="dialog" max-width="500">
+          <v-card>
+            <v-card-title>{{
+              isEditing ? 'Edit Campaign' : 'Campaign Details'
+            }}</v-card-title>
 
-    <v-dialog v-model="createDialog" max-width="500">
-      <v-card>
-        <v-card-title>Create a Campaign</v-card-title>
+            <v-card-text>
+              <v-alert
+                v-if="updateErrors.length"
+                type="error"
+                class="mb-4"
+                dense
+                border="start"
+              >
+                <ul class="pl-4 no-bullets">
+                  <li v-for="(err, index) in updateErrors" :key="index">
+                    {{ err }}
+                  </li>
+                </ul>
+              </v-alert>
+              <v-text-field
+                v-model="modalCampaign.name"
+                label="Campaign Name"
+                :disabled="!isEditing"
+                data-cy="edit-name"
+              />
+              <v-textarea
+                v-model="modalCampaign.description"
+                label="Description"
+                :disabled="!isEditing"
+                auto-grow
+                data-cy="edit-description"
+              />
 
-        <v-card-text>
-          <v-alert
-            v-if="formErrors.length"
-            type="error"
-            class="mb-4"
-            dense
-            border="start"
-          >
-            <ul class="pl-4 no-bullets">
-              <li v-for="(error, index) in formErrors" :key="index">
-                {{ error }}
-              </li>
-            </ul>
-          </v-alert>
-          <v-text-field
-            v-model="newCampaign.name"
-            label="Campaign Name"
-            required
-            data-cy="create-name"
-          />
-          <v-textarea
-            v-model="newCampaign.description"
-            label="Description"
-            data-cy="create-description"
-          />
-          <v-date-input
-            v-model="newCampaign.start_date"
-            label="Start date"
-            data-cy="create-start"
-          ></v-date-input>
-          <v-date-input
-            v-model="newCampaign.end_date"
-            label="End date"
-            data-cy="create-end"
-          ></v-date-input>
+              <v-date-input
+                v-model="modalCampaign.start_date"
+                label="Start date"
+                :disabled="!isEditing"
+                data-cy="edit-start"
+              ></v-date-input>
+              <v-date-input
+                v-model="modalCampaign.end_date"
+                label="End date"
+                :disabled="!isEditing"
+                data-cy="edit-end"
+              ></v-date-input>
 
-          <v-text-field
-            v-model="newCampaign.budget"
-            label="Budget"
-            type="number"
-            data-cy="create-budget"
-          />
-          <v-select
-            v-model="newCampaign.is_active"
-            label="Status"
-            data-cy="create-status"
-            :items="[
-              { text: 'Active', value: true },
-              { text: 'Inactive', value: false },
-            ]"
-            item-title="text"
-            item-value="value"
-          />
-        </v-card-text>
+              <v-text-field
+                v-model="modalCampaign.budget"
+                label="Budget"
+                type="number"
+                data-cy="edit-budget"
+                :disabled="!isEditing"
+              />
+              <v-select
+                v-model="modalCampaign.is_active"
+                label="Status"
+                data-cy="edit-status"
+                :items="[
+                  { text: 'Active', value: true },
+                  { text: 'Inactive', value: false },
+                ]"
+                item-title="text"
+                item-value="value"
+                :disabled="!isEditing"
+              />
+            </v-card-text>
 
-        <v-card-actions>
-          <v-btn color="grey" @click="createDialog = false"> Cancel </v-btn>
-          <v-btn
-            color="primary"
-            data-cy="create-submit"
-            @click="submitCreateCampaign"
-          >
-            Create
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    <v-dialog v-model="confirmDeleteDialog" max-width="400">
-      <v-card>
-        <v-card-title class="text-h6">Confirm Deletion</v-card-title>
-        <v-card-text>
-          Are you sure you want to delete this campaign ? This action cannot be
-          undone.
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn color="grey" variant="text" @click="cancelDelete"
-            >Cancel</v-btn
-          >
-          <v-btn color="red" variant="flat" @click="confirmDeleteCampaign"
-            >Delete</v-btn
-          >
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+            <v-card-actions>
+              <v-btn
+                color="red"
+                @click="isEditing ? cancelEdit() : (dialog = false)"
+              >
+                {{ isEditing ? 'Cancel Edit' : 'Close' }}
+              </v-btn>
 
-    <v-snackbar v-model="showSnackbar" timeout="3000" color="info">
-      {{ toastMessage }}
-    </v-snackbar>
-  </v-container>
+              <v-btn
+                color="primary"
+                data-cy="edit-save"
+                @click="isEditing ? saveCampaign() : toggleEditMode()"
+              >
+                {{ isEditing ? 'Save Changes' : 'Edit' }}
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <v-dialog v-model="createDialog" max-width="500">
+          <v-card>
+            <v-card-title>Create a Campaign</v-card-title>
+
+            <v-card-text>
+              <v-alert
+                v-if="formErrors.length"
+                type="error"
+                class="mb-4"
+                dense
+                border="start"
+              >
+                <ul class="pl-4 no-bullets">
+                  <li v-for="(error, index) in formErrors" :key="index">
+                    {{ error }}
+                  </li>
+                </ul>
+              </v-alert>
+              <v-text-field
+                v-model="newCampaign.name"
+                label="Campaign Name"
+                required
+                data-cy="create-name"
+              />
+              <v-textarea
+                v-model="newCampaign.description"
+                label="Description"
+                data-cy="create-description"
+              />
+              <v-date-input
+                v-model="newCampaign.start_date"
+                label="Start date"
+                data-cy="create-start"
+              ></v-date-input>
+              <v-date-input
+                v-model="newCampaign.end_date"
+                label="End date"
+                data-cy="create-end"
+              ></v-date-input>
+
+              <v-text-field
+                v-model="newCampaign.budget"
+                label="Budget"
+                type="number"
+                data-cy="create-budget"
+              />
+              <v-select
+                v-model="newCampaign.is_active"
+                label="Status"
+                data-cy="create-status"
+                :items="[
+                  { text: 'Active', value: true },
+                  { text: 'Inactive', value: false },
+                ]"
+                item-title="text"
+                item-value="value"
+              />
+            </v-card-text>
+
+            <v-card-actions>
+              <v-btn color="grey" @click="createDialog = false"> Cancel </v-btn>
+              <v-btn
+                color="primary"
+                data-cy="create-submit"
+                @click="submitCreateCampaign"
+              >
+                Create
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+        <v-dialog v-model="confirmDeleteDialog" max-width="400">
+          <v-card>
+            <v-card-title class="text-h6">Confirm Deletion</v-card-title>
+            <v-card-text>
+              Are you sure you want to delete this campaign ? This action cannot
+              be undone.
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn color="grey" variant="text" @click="cancelDelete"
+                >Cancel</v-btn
+              >
+              <v-btn color="red" variant="flat" @click="confirmDeleteCampaign"
+                >Delete</v-btn
+              >
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <v-snackbar v-model="showSnackbar" timeout="3000" color="info">
+          {{ toastMessage }}
+        </v-snackbar>
+      </v-container>
+    </v-main>
+  </v-app>
 </template>
 
 <script setup>
@@ -269,7 +288,7 @@ import { useAuthStore } from '@/stores/authStore';
 const router = useRouter();
 const authStore = useAuthStore();
 const campaignStore = useCampaignStore();
-
+const drawer = ref(false);
 const dialog = ref(false);
 const createDialog = ref(false);
 const isEditing = ref(false);
@@ -301,6 +320,10 @@ const showToast = (message) => {
   toastMessage.value = message;
   showSnackbar.value = true;
 };
+const handleDrawerClick = (action) => {
+  drawer.value = false;
+  action();
+};
 
 const askDeleteCampaign = (index) => {
   campaignToDelete.value = index;
@@ -313,7 +336,7 @@ const cancelDelete = () => {
 };
 
 const formatDate = (dateStr) => {
-  return dateStr ? dateStr.slice(0, 10) : '';
+  return (dateStr ? dateStr.slice(0, 10) : '') + ' UTC';
 };
 const isEmpty = (field) => {
   return !field || String(field).trim() === '';
@@ -414,7 +437,7 @@ const saveCampaign = async () => {
   requiredFields.forEach((field) => {
     const value = modalCampaign.value[field];
     if (!value && value !== 0) {
-      updateErrors.value.push(`Le champ "${field}" est obligatoire.`);
+      updateErrors.value.push(`The field "${field}" is necessary.`);
     }
   });
 
@@ -423,14 +446,24 @@ const saveCampaign = async () => {
     const endDate = new Date(modalCampaign.value.end_date);
 
     if (startDate >= endDate) {
-      updateErrors.value.push(
-        'La date de fin doit être après la date de début.',
-      );
+      updateErrors.value.push('The end date must be after the start date.');
     }
   }
 
   if (updateErrors.value.length > 0) {
-    showToast('Veuillez corriger les erreurs dans le formulaire.');
+    showToast('Please correct the errors in the form.');
+    return;
+  }
+
+  // Vérifie s'il y a un changement réel
+  const hasChanged = Object.keys(modalCampaign.value).some((key) => {
+    return modalCampaign.value[key] !== backupCampaign.value[key];
+  });
+
+  if (!hasChanged) {
+    showToast('No changes detected.');
+    dialog.value = false;
+    isEditing.value = false;
     return;
   }
 
@@ -449,17 +482,17 @@ const saveCampaign = async () => {
       payload,
     );
 
-    if (result.success) {
-      showToast(result.message || 'Campagne mise à jour avec succès !');
+    if (result.updated) {
+      showToast(result.message || 'Campaign updated successfully!');
       await fetchCampaigns();
       dialog.value = false;
       isEditing.value = false;
     } else {
-      showToast(result.message || 'Erreur lors de la mise à jour');
+      showToast(result.message || 'Error while updating');
     }
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde :', error);
-    showToast(error.message || 'Une erreur inattendue est survenue');
+    console.error('Error while saving :', error);
+    showToast(error.message || 'An unexpected error occurred');
   } finally {
     isEditing.value = false;
   }
@@ -490,13 +523,6 @@ const handleLogout = async () => {
 <style scoped>
 .v-container {
   padding-top: 80px !important;
-  height: auto;
-}
-
-.no-bullets {
-  list-style: none;
-  padding-left: 0;
-  margin: 0;
 }
 
 .v-card {
@@ -506,25 +532,14 @@ const handleLogout = async () => {
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.dashboard-content {
-  padding-top: 64px;
-  height: auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.v-main {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-}
-
 .disconnect {
   margin-inline-end: 20px !important;
 }
 
-.error-style .v-field {
-  border: 1px solid #f44336 !important;
-  border-radius: 4px;
+@media (max-width: 599px) {
+  .v-btn {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
 }
 </style>

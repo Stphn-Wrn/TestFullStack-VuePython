@@ -1,4 +1,3 @@
-// src/stores/campaignStore.js
 import { defineStore } from 'pinia';
 import apiClient from '@/api/client';
 
@@ -80,7 +79,7 @@ export const useCampaignStore = defineStore('campaign', {
         await apiClient.delete(`/campaigns/${campaignId}`);
         this.campaigns = this.campaigns.filter(
           (campaign) => campaign.id !== campaignId,
-        ); // Retirer la campagne supprimée de la liste
+        );
       } catch (error) {
         this.error = 'Failed to delete campaign.';
       } finally {
@@ -90,7 +89,6 @@ export const useCampaignStore = defineStore('campaign', {
   },
 
   getters: {
-    // 1. Vérifier si l'utilisateur a des campagnes
     hasCampaigns: (state) => state.campaigns.length > 0,
   },
 });

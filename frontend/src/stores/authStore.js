@@ -56,7 +56,6 @@ export const useAuthStore = defineStore('auth', {
     },
     async fetchUser() {
       try {
-        // Le cookie access_token est envoyé automatiquement
         const { data } = await apiClient.get('/auth/me');
         this.user = data;
         return true;
@@ -84,10 +83,9 @@ export const useAuthStore = defineStore('auth', {
       } catch (error) {
         const err = error.response?.data?.error;
 
-        // Gestion des erreurs de validation retournées en objet
         if (err && typeof err === 'object') {
           const firstField = Object.keys(err)[0];
-          this.error = err[firstField][0]; // Prend le premier message d'erreur
+          this.error = err[firstField][0];
         } else {
           this.error = err || 'Registration failed';
         }
