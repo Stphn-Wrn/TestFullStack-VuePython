@@ -1,6 +1,5 @@
 <template>
   <v-app>
-    <!-- AppBar + Drawer -->
     <v-app-bar color="primary" dense app>
       <v-app-bar-nav-icon class="d-sm-none" @click="drawer = !drawer" />
       <v-toolbar-title>Dashboard</v-toolbar-title>
