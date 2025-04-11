@@ -30,7 +30,7 @@ WORKDIR /opt/app/backend
 RUN poetry install --no-interaction --no-ansi
 
 
-# stage 2
+
 FROM base
 
 COPY . .

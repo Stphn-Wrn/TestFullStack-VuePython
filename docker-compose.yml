@@ -26,7 +26,7 @@ services:
     depends_on:
       - psql
     networks:
-      - app-network  # Associer Adminer au réseau
+      - app-network  
   psql:
     image: postgres:latest
     restart: always
@@ -47,7 +47,7 @@ services:
       timeout: 10s
       retries: 5
     networks:
-      - app-network  # Associer Adminer au réseau
+      - app-network  
 networks:
-  app-network:  # Définition du réseau
+  app-network:  
     driver: bridge

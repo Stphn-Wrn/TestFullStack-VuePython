@@ -1,6 +1,6 @@
 from marshmallow import Schema, fields, validate, ValidationError, validates
-from dateutil import parser
 from datetime import datetime
+from dateutil import parser
 
 class SafeDateTime(fields.DateTime):
     def _deserialize(self, value, attr, data, **kwargs):
@@ -12,13 +12,16 @@ class SafeDateTime(fields.DateTime):
             raise self.make_error("invalid", input=value) from error
 
 class CampaignSchema(Schema):
+    class Meta:
+        strict = True
+    
     id = fields.Int(dump_only=True)
     name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     description = fields.Str()
     start_date = SafeDateTime(required=True)
     end_date = SafeDateTime(required=True)
-    budget = fields.Int()
-    status = fields.Boolean()
+    budget = fields.Decimal(places=2, validate=validate.Range(min=0))
+    is_active = fields.Boolean(metadata={"description": "True=Active, False=Deactivated"})
     created_at = fields.DateTime(dump_only=True)
     owner_id = fields.Int(dump_only=True)
 
@@ -28,9 +31,12 @@ class CampaignSchema(Schema):
             raise ValidationError("end_date must be after start_date")
 
 class CampaignUpdateSchema(Schema):
+    class Meta:
+        strict = True
+    
     name = fields.Str(validate=validate.Length(min=1, max=100))
     description = fields.Str()
     start_date = SafeDateTime()
     end_date = SafeDateTime()
-    budget = fields.Int()
-    status = fields.Boolean()
+    budget = fields.Decimal(places=2, validate=validate.Range(min=0))
+    is_active = fields.Boolean()

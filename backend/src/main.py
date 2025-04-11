@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request
 from flasgger import Swagger
 from datetime import (
     timedelta,
@@ -9,13 +9,10 @@ from datetime import timedelta, datetime, timezone
 from flask_jwt_extended import (
     JWTManager,
     create_access_token,
-    create_refresh_token,
     set_access_cookies,
-    set_refresh_cookies,
     get_jwt,
     get_jwt_identity,
     verify_jwt_in_request,
-    jwt_required
 )
 from src.campaigns.routes import campaign_bp
 from src.users.routes import auth_bp
@@ -23,7 +20,7 @@ from src.swagger_definitions import swagger_template
 from flask_cors import CORS
 
 
-import os, logging
+import os
 
 app = Flask(__name__)
 CORS(app,
@@ -32,7 +29,7 @@ CORS(app,
     "http://localhost:3000",
     "http://127.0.0.1:3000"
   ],
-  methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
   allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-CSRF-TOKEN", "COOKIES"],
   expose_headers=["Set-Cookie"],
 )
@@ -51,7 +48,7 @@ app.config['SWAGGER'] = {
 }
 
 app.config.update({
-    "JWT_SECRET_KEY": os.getenv("JWT_SECRET_KEY", "stephen/test/secretKey"),
+    "JWT_SECRET_KEY": os.getenv("JWT_SECRET_KEY", "to/change"),
     "JWT_ACCESS_TOKEN_EXPIRES": timedelta(minutes=15),
     "JWT_REFRESH_TOKEN_EXPIRES": timedelta(days=30),
     "JWT_TOKEN_LOCATION": ["cookies"],

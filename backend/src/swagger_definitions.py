@@ -12,7 +12,7 @@ swagger_template = {
             "url": "https://opensource.org/licenses/MIT"
         }
     },
-    "host": "localhost:5000",  # Ajustez selon votre configuration
+    "host": "localhost:5000",
     "basePath": "/",
     "schemes": ["http", "https"],
     "consumes": ["application/json"],
@@ -335,7 +335,7 @@ swagger_template = {
                     }
                 }
             },
-            "put": {
+            "patch": {
                 "tags": ["Campaigns"],
                 "summary": "Update a campaign",
                 "description": "Updates an existing campaign",

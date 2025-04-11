@@ -1,8 +1,11 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from datetime import datetime, timezone
-from werkzeug.security import generate_password_hash, check_password_hash
 from src.core.database import Base
-
+from sqlalchemy import (
+    Column, Integer, String, DateTime, 
+)
+from werkzeug.security import generate_password_hash, check_password_hash
+import re
+from sqlalchemy import event
 class User(Base):
     __tablename__ = "users"
 
@@ -18,5 +21,3 @@ class User(Base):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-    
-    

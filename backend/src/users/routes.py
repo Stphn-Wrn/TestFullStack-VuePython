@@ -4,6 +4,7 @@ from src.users.schemas import UserSchema
 from src.users.models import User
 from datetime import timedelta
 from src.core.database import db_session
+from marshmallow import ValidationError
 
 
 from flask_jwt_extended import (
@@ -27,23 +28,26 @@ def register():
         schema = UserSchema()
         user_data = schema.load(data)
         
-        user_id = UserService.create_user(
+        user = UserService.create_user(
             username=user_data['username'],
             email=user_data['email'],
             password=user_data['password']
         )
         
-        tokens = UserService.generate_auth_tokens(user_id)
+        tokens = UserService.generate_auth_tokens(user)
         
         response = jsonify({
-            "message": "User created successfully",
-            "user_id": user_id
+            "message": "User created successfully"
         })
         
         set_access_cookies(response, tokens["access_token"])
         set_refresh_cookies(response, tokens["refresh_token"])
         
         return response, 201
+    
+    except ValidationError as err:
+        return jsonify({"error": err.messages}), 400
+    
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
@@ -77,6 +81,8 @@ def login():
 def get_current_user():
     if request.method == 'OPTIONS':
         return '', 200
+    session = db_session()
+
     try:
 
         current_user_id = get_jwt_identity()
@@ -84,7 +90,6 @@ def get_current_user():
         if user_id is None:
             return jsonify({"error": "Invalid user ID"}), 400
 
-        session = db_session()
         user = session.query(User).filter(User.id == user_id).first()
 
         if not user:
@@ -98,6 +103,7 @@ def get_current_user():
         return jsonify({"error": "Server error"}), 500
     finally:
         session.close()
+
         
 @auth_bp.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True)  

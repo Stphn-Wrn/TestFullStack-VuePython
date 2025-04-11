@@ -60,8 +60,7 @@ def get_campaign(campaign_id):
 def get_all_campaigns():
     try:
 
-        current_user_id = get_jwt_identity()
-        campaigns = CampaignService.get_user_campaigns(current_user_id)
+        campaigns = CampaignService.get_user_campaigns()
         
         return jsonify({
             "data": campaign_schema.dump(campaigns, many=True)
@@ -70,20 +69,25 @@ def get_all_campaigns():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@campaign_bp.route('/<int:campaign_id>', methods=['PUT', 'OPTIONS'])
+@campaign_bp.route('/<int:campaign_id>', methods=['PATCH', 'OPTIONS'])
 @jwt_required()
 def update_campaign(campaign_id):
     if request.method == 'OPTIONS':
         return '', 200
+
     try:
         data = campaign_update_schema.load(request.get_json(), partial=True)
+
         campaign = CampaignService.update_campaign(campaign_id, data)
-        
+
+        if campaign is None:
+            return jsonify({"message": "No fields to update"}), 200
+
         return jsonify({
             "data": campaign_schema.dump(campaign),
             "message": "Campaign updated successfully"
         }), 200
-        
+
     except ValidationError as e:
         return jsonify({"error": e.messages}), 400
     except ValueError as e:
