@@ -43,6 +43,7 @@ $ alembic upgrade head # apply the migration
 ```
 /TestFullStack-VuePython/frontend
 $ npm run dev
+http://localhost:3000/
 ```
 
 # Testing
