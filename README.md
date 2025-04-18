@@ -49,7 +49,7 @@ http://localhost:3000/
 # Testing
 ```
 /TestFullStack-VuePython : 
-$ pytest backend/tests/unit
+$ poetry run pytest backend/tests/unit
 ```
 ```
 /frontend : 
