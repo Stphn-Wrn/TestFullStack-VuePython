@@ -35,8 +35,8 @@ We use alembic to generate database auto migration
 when you edit a model you can simply use this command to automatically generate a migration script:
 
 ```shell
-$ alembic revision --autogenerate -m "the purpose of the migration briefly"
-$ alembic upgrade head # apply the migration
+$ poetry run alembic revision --autogenerate -m "the purpose of the migration briefly"
+$ poetry run alembic upgrade head # apply the migration
 ```
 
 # Start frontend 
