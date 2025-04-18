@@ -48,8 +48,8 @@ http://localhost:3000/
 
 # Testing
 ```
-/TestFullStack-VuePython : 
-$ poetry run pytest backend/tests/unit
+/TestFullStack-VuePython/backend : 
+$ poetry run pytest tests/unit
 ```
 ```
 /frontend : 
