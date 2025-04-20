@@ -123,9 +123,3 @@ Once the server is running (via Docker or locally), you can access the documenta
 
 [http://localhost:8000/docs/#/](http://localhost:8000/docs/#/)
 
-This interface allows you to:
-
-- Explore available API endpoints
-- Test them directly via the browser 
-- View expected input/output schemas
-
