@@ -12,7 +12,7 @@ config = context.config
 load_dotenv()
 
 import os
-db_url = os.getenv("SQLALCHEMY_DATABASE_URL_APP", " postgresql://stephen:test@localhost:3306/campaign")
+db_url = os.getenv("SQLALCHEMY_DATABASE_URL_APP", "SQLALCHEMY_DATABASE_URL_APP_BACKUP")
 print(f">> DB URL {db_url}")
 config.set_main_option("sqlalchemy.url", db_url)
 
