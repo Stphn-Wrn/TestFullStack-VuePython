@@ -114,3 +114,18 @@ Run ESLint to automatically fix issues:
 cd frontend
 eslint --fix ./src
 ```
+
+## 8. API Documentation (Swagger)
+
+The backend provides interactive API documentation via **Swagger UI**, thanks to [Flasgger](https://github.com/flasgger/flasgger).
+
+Once the server is running (via Docker or locally), you can access the documentation at:
+
+[http://localhost:8000/docs/#/](http://localhost:8000/docs/#/)
+
+This interface allows you to:
+
+- Explore available API endpoints
+- Test them directly via the browser 
+- View expected input/output schemas
+
